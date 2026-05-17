@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import datetime
 
 # 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL
 st.set_page_config(
@@ -70,32 +71,35 @@ st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLU
 st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA)
-@st.cache_data(ttl=5)
+# 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA REAL)
+@st.cache_data(ttl=2)
 def descargar_datos_despacho():
     try:
-        url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos&pestana=Historico_Ventas"
+        # Apuntamos a la nueva operación controlada por parámetro
+        url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos"
         respuesta = requests.get(url_con_parametros, timeout=10)
         resultado = respuesta.json()
         
         if isinstance(resultado, list):
             return resultado
-        elif isinstance(resultado, dict) and "data" in resultado:
-            return resultado.get("data", [])
         return []
     except Exception as e:
         st.error(f"Error de conexión con la central: {e}")
         return []
 
-# FUNCIÓN PARA REPORTAR LA ENTREGA A GOOGLE SHEETS (ESCRITURA)
+# FUNCIÓN PARA REPORTAR LA ENTREGA A GOOGLE SHEETS (ESCRITURA CON HORA)
 def registrar_entrega_en_sheets(id_venta):
     try:
-        url_actualizar = f"{URL_API}?tipo_operacion=ActualizarEstado&id_venta={id_venta}&nuevo_estado=Entregado"
+        # Capturamos la marca de tiempo exacta del dispositivo móvil (Ej: 2026-05-17 17:54:20)
+        ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Enviamos el id, el estado y el nuevo campo de hora_entrega
+        url_actualizar = f"{URL_API}?tipo_operacion=ActualizarEstado&id_venta={id_venta}&nuevo_estado=Entregado&hora_entrega={ahora}"
         respuesta = requests.get(url_actualizar, timeout=10)
         
         if respuesta.status_code == 200:
             st.toast(f"¡Pedido #{id_venta} marcado como Entregado! 🎉", icon="✅")
-            st.cache_data.clear() # Limpia caché para forzar recarga inmediata
+            st.cache_data.clear() # Limpia el caché inmediatamente para forzar la recarga
             st.rerun()
         else:
             st.error("La central recibió la orden pero no pudo actualizar la fila.")
@@ -105,41 +109,29 @@ def registrar_entrega_en_sheets(id_venta):
 datos_crudos = descargar_datos_despacho()
 
 if not datos_crudos:
-    st.warning("No se recibieron datos de la central o la lista está vacía.")
+    st.warning("No se recibieron datos de la central o la lista de despachos está vacía.")
 else:
+    # Procesamiento y Mapeo directo desde la matriz real de Google Sheets
     df_base = pd.DataFrame(datos_crudos)
-    ejemplo_celda = str(df_base.iloc[0, 0]).upper() if not df_base.empty else ""
     
-    # Detección y Mapeo inteligente (Mantiene tu lógica actual que ya funciona)
-    if "PLAQUETA" in ejemplo_celda or "16-20" in ejemplo_celda or "21-25" in ejemplo_celda or len(df_base.columns) == 5:
-        # Registros de contingencia/simulación basados en tu Historico_Ventas real
-        registros_ventas = [
-            {'id_venta': 'VTA-177897274', 'fecha': '20260516', 'direccion': 'Cali', 'cliente': 'javier', 'producto': 'LANGOSTINO', 'cantidad_kgs': 10, 'estado': 'Pendiente', 'repartidor': 'Sede Cali'},
-            {'id_venta': 'VTA-177897301', 'fecha': '20260516', 'direccion': 'Cali', 'cliente': 'javier', 'producto': 'PLAQUETA 91-110', 'cantidad_kgs': 100, 'estado': 'Pendiente', 'repartidor': 'Sede Cali'}
-        ]
-        df = pd.DataFrame(registros_ventas)
-    else:
-        df_base = df_base[df_base[0].astype(str).str.strip() != ''].copy()
-        df_base = df_base[df_base[0].astype(str).str.upper() != 'ID_VENTA'].copy()
-        
-        df = pd.DataFrame()
-        df['id_venta'] = df_base[0].astype(str)
-        df['fecha'] = df_base[1]
-        df['direccion'] = df_base[2]
-        df['cliente'] = df_base[3]
-        df['producto'] = df_base[4]
-        df['cantidad_kgs'] = df_base[6]
-        df['estado'] = df_base[10]
-        df['repartidor'] = df_base[2]
+    df = pd.DataFrame()
+    df['id_venta'] = df_base[0].astype(str).str.strip()
+    df['fecha'] = df_base[1].astype(str)
+    df['direccion'] = df_base[2].astype(str)
+    df['cliente'] = df_base[3].astype(str)
+    df['producto'] = df_base[4].astype(str)
+    df['cantidad_kgs'] = pd.to_numeric(df_base[6], errors='coerce').fillna(0.0)
+    df['estado'] = df_base[10].astype(str).str.strip()
+    df['repartidor'] = df_base[2].astype(str) # Se usa la sede de despacho como Zona de manera predeterminada
 
-    df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
-    df = df[df['id_venta'].astype(str).str.strip() != ''].copy()
+    # Filtro de seguridad para remover registros o encabezados vacíos
+    df = df[df['id_venta'] != ''].copy()
 
     if df.empty:
         st.info("No hay registros activos de despacho en este momento.")
     else:
-        # 4. METRICAS CLAVE
-        pendientes = len(df[df['estado'].astype(str).str.lower().str.strip() != 'entregado'])
+        # 4. METRICAS CLAVE EN TIEMPO REAL
+        pendientes = len(df[df['estado'].str.lower() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
         col1, col2 = st.columns(2)
@@ -155,19 +147,19 @@ else:
 
         if busqueda:
             df = df[
-                df['cliente'].astype(str).str.contains(busqueda, case=False) | 
-                df['producto'].astype(str).str.contains(busqueda, case=False)
+                df['cliente'].str.contains(busqueda, case=False) | 
+                df['producto'].str.contains(busqueda, case=False)
             ]
 
         # 6. HOJA DE RUTA EN TIEMPO REAL
         st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
         for index, fila in df.iterrows():
-            id_v = str(fila['id_venta']).strip()
-            estado = str(fila['estado']).strip()
+            id_v = fila['id_venta']
+            estado = fila['estado']
             clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
             
-            # Pintamos la tarjeta visual
+            # Renderizado visual de la tarjeta
             card_html = f"""
             <div class="delivery-card">
                 <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -189,9 +181,8 @@ else:
             """
             st.markdown(card_html, unsafe_allow_html=True)
             
-            # Si el registro está Pendiente, le habilitamos su propio botón físico debajo de la tarjeta
+            # Si el registro está Pendiente, habilitamos su propio botón físico debajo de la tarjeta
             if estado.lower() != "entregado":
-                # Usamos una llave única combinando el ID de venta y el índice para evitar conflictos en bucles
                 if st.button(f"Confirmar Entrega ✅", key=f"btn_{id_v}_{index}"):
                     registrar_entrega_en_sheets(id_v)
             
