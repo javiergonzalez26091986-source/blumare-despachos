@@ -80,81 +80,104 @@ datos_ventas = descargar_datos_despacho()
 if not datos_ventas:
     st.warning("No se encontraron registros de entregas en la pestaña Historico_Ventas o la API no respondió.")
 else:
-    # Convertimos los datos a DataFrame
-    df = pd.DataFrame(datos_ventas)
+    # Convertimos los datos crudos a un DataFrame
+    df_crudo = pd.DataFrame(datos_ventas)
 
-    # MAPEADO RESILIENTE CON LAS COLUMNAS REALES DE HISTORICO_VENTAS
-    columnas_reales = {
-        'id_venta': 'ID_Venta',
-        'cliente': 'Cliente',
-        'producto': 'Producto',
-        'cantidad_kgs': 'Cantidad_KGS',
-        'direccion': 'Sede_Despacho',
-        'estado': 'Estado_Despacho',
-        'repartidor': 'Sede_Despacho', # Provisional mientras se añade campo de transportador específico
-        'fecha': 'Fecha_Hora'
-    }
+    # LIMPIEZA INTERACTIVA DE FILAS VACÍAS (Filtra las celdas en blanco de Google Sheets)
+    # Caso A: Si la API ya envía los datos con llaves con nombre, verificamos 'ID_Venta'
+    if 'ID_Venta' in df_crudo.columns:
+        df = df_crudo[df_crudo['ID_Venta'].astype(str).str.strip() != ''].copy()
     
-    # Inyección segura de campos para prevenir cualquier KeyError si Sheets cambia
-    for clave_app, columna_sheet in columnas_reales.items():
-        if columna_sheet in df.columns:
-            df[clave_app] = df[columna_sheet]
-        elif clave_app not in df.columns:
-            df[clave_app] = "N/A"
+    # Caso B: Si la API los envía como una matriz pura sin encabezado implícito (Columnas 0, 1, 2...)
+    elif 0 in df_crudo.columns:
+        df = df_crudo[df_crudo[0].astype(str).str.strip() != ''].copy()
+        # Mapeamos las columnas por su posición física en la hoja de cálculo (A=0, B=1, C=2, D=3, E=4, G=6, K=10)
+        df['ID_Venta'] = df[0]
+        df['Fecha_Hora'] = df[1]
+        df['Sede_Despacho'] = df[2]
+        df['Cliente'] = df[3]
+        df['Producto'] = df[4]
+        df['Cantidad_KGS'] = df[6]
+        df['Estado_Despacho'] = df[10]
+    else:
+        df = df_crudo.copy()
 
-    # Forzar formato numérico limpio en los kilogramos para sumatorias seguras
-    df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
-
-    # 4. MÉTRICAS CLAVE EN LA PARTE SUPERIOR (KPIs)
-    # Filtra todo lo que no esté marcado exactamente como 'entregado'
-    pendientes = len(df[df['estado'].astype(str).str.lower() != 'entregado'])
-    total_kgs = df['cantidad_kgs'].sum()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="Envíos Pendientes", value=pendientes)
-    with col2:
-        st.metric(label="Total Kilos Ruta", value=f"{total_kgs:,.1f} KG")
-
-    st.markdown("##")
-
-    # 5. BUSCADOR INTERACTIVO EN TIEMPO REAL
-    busqueda = st.text_input("🔍 Buscar por Cliente o Producto:", placeholder="Escribe para filtrar la ruta...")
-
-    if busqueda:
-        df = df[
-            df['cliente'].astype(str).str.contains(busqueda, case=False) | 
-            df['producto'].astype(str).str.contains(busqueda, case=False)
-        ]
-
-    # 6. RENDERIZADO DE LAS TARJETAS DIGITALES DE ENTREGA
-    st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
-    
-    for _, fila in df.iterrows():
-        estado = str(fila['estado']).strip()
-        clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
+    # Validación por si el archivo quedó completamente vacío tras la limpieza
+    if df.empty:
+        st.info("Aún no hay registros válidos con un ID de Venta en la base de datos.")
+    else:
+        # MAPEADO RESILIENTE CON LAS COLUMNAS REALES DE HISTORICO_VENTAS
+        columnas_reales = {
+            'id_venta': 'ID_Venta',
+            'cliente': 'Cliente',
+            'producto': 'Producto',
+            'cantidad_kgs': 'Cantidad_KGS',
+            'direccion': 'Sede_Despacho',
+            'estado': 'Estado_Despacho',
+            'repartidor': 'Sede_Despacho', # Provisional mientras se añade campo de transportador específico
+            'fecha': 'Fecha_Hora'
+        }
         
-        # Estructura visual adaptada a pantallas de smartphones
-        card_html = f"""
-        <div class="delivery-card">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{fila['id_venta']}</span>
-                    <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
+        # Inyección segura de campos para prevenir cualquier KeyError si Sheets cambia
+        for clave_app, columna_sheet in columnas_reales.items():
+            if columna_sheet in df.columns:
+                df[clave_app] = df[columna_sheet]
+            elif clave_app not in df.columns:
+                df[clave_app] = "N/A"
+
+        # Forzar formato numérico limpio en los kilogramos para sumatorias seguras
+        df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
+
+        # 4. MÉTRICAS CLAVE EN LA PARTE SUPERIOR (KPIs)
+        # Filtra todo lo que no esté marcado exactamente como 'entregado'
+        pendientes = len(df[df['estado'].astype(str).str.lower() != 'entregado'])
+        total_kgs = df['cantidad_kgs'].sum()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(label="Envíos Pendientes", value=pendientes)
+        with col2:
+            st.metric(label="Total Kilos Ruta", value=f"{total_kgs:,.1f} KG")
+
+        st.markdown("##")
+
+        # 5. BUSCADOR INTERACTIVO EN TIEMPO REAL
+        busqueda = st.text_input("🔍 Buscar por Cliente o Producto:", placeholder="Escribe para filtrar la ruta...")
+
+        if busqueda:
+            df = df[
+                df['cliente'].astype(str).str.contains(busqueda, case=False) | 
+                df['producto'].astype(str).str.contains(busqueda, case=False)
+            ]
+
+        # 6. RENDERIZADO DE LAS TARJETAS DIGITALES DE ENTREGA
+        st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
+        
+        for _, fila in df.iterrows():
+            estado = str(fila['estado']).strip()
+            clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
+            
+            # Estructura visual adaptada a pantallas de smartphones
+            card_html = f"""
+            <div class="delivery-card">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div>
+                        <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{fila['id_venta']}</span>
+                        <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
+                    </div>
+                    <span class="{clase_badge}">{estado.upper()}</span>
                 </div>
-                <span class="{clase_badge}">{estado.upper()}</span>
+                <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
+                    <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
+                    <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff;">
+                    <span>🏢 Central: {fila['repartidor']}</span>
+                    <span>📅 Registro: {fila['fecha']}</span>
+                </div>
             </div>
-            <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
-                <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff;">
-                <span>🏢 Central: {fila['repartidor']}</span>
-                <span>📅 Registro: {fila['fecha']}</span>
-            </div>
-        </div>
-        """
-        st.markdown(card_html, unsafe_allow_html=True)
+            """
+            st.markdown(card_html, unsafe_allow_html=True)
 
 # 7. BOTÓN MANUAL DE REFRESCAR EN EL FOOTER
 if st.button("🔄 Sincronizar Datos Ahora"):
