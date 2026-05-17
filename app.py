@@ -56,19 +56,25 @@ st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLU
 st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# 3. CONEXIÓN Y DESCARGA DE DATOS
-@st.cache_data(ttl=60)  # Limpia caché cada 60 segundos automáticamente
+# 3. CONEXIÓN Y DESCARGA DE DATOS CORREGIDA
+@st.cache_data(ttl=10)  # Bajamos a 10 segundos para mayor fluidez en calle
 def descargar_datos_despacho():
     try:
         respuesta = requests.get(f"{URL_API}?tipo_operacion=ObtenerDespachos", timeout=10)
         resultado = respuesta.json()
-        if resultado.get("status") == "SUCCESS":
+        
+        # Corrección exacta: Si la API devuelve una lista directa, la retornamos de una
+        if isinstance(resultado, list):
+            return resultado
+        # Si viene envuelta en un diccionario estándar
+        elif isinstance(resultado, dict) and "data" in resultado:
             return resultado.get("data", [])
+            
         return []
     except Exception as e:
         st.error(f"Error de conexión con la central: {e}")
         return []
-
+        
 datos_ventas = descargar_datos_despacho()
 
 if not datos_ventas:
