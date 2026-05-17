@@ -63,10 +63,8 @@ def descargar_datos_despacho():
         respuesta = requests.get(f"{URL_API}?tipo_operacion=ObtenerDespachos", timeout=10)
         resultado = respuesta.json()
         
-        # Si la API devuelve una lista directa de filas
         if isinstance(resultado, list):
             return resultado
-        # Si viene envuelta en un formato de diccionario estándar con la clave "data"
         elif isinstance(resultado, dict) and "data" in resultado:
             return resultado.get("data", [])
             
@@ -83,30 +81,20 @@ else:
     # Convertimos los datos crudos a un DataFrame
     df_crudo = pd.DataFrame(datos_ventas)
 
-    # LIMPIEZA INTERACTIVA DE FILAS VACÍAS (Filtra las celdas en blanco de Google Sheets)
-    # Caso A: Si la API ya envía los datos con llaves con nombre, verificamos 'ID_Venta'
-    if 'ID_Venta' in df_crudo.columns:
-        df = df_crudo[df_crudo['ID_Venta'].astype(str).str.strip() != ''].copy()
-    
-    # Caso B: Si la API los envía como una matriz pura sin encabezado implícito (Columnas 0, 1, 2...)
-    elif 0 in df_crudo.columns:
-        df = df_crudo[df_crudo[0].astype(str).str.strip() != ''].copy()
-        # Mapeamos las columnas por su posición física en la hoja de cálculo (A=0, B=1, C=2, D=3, E=4, G=6, K=10)
-        df['ID_Venta'] = df[0]
-        df['Fecha_Hora'] = df[1]
-        df['Sede_Despacho'] = df[2]
-        df['Cliente'] = df[3]
-        df['Producto'] = df[4]
-        df['Cantidad_KGS'] = df[6]
-        df['Estado_Despacho'] = df[10]
+    # Buscamos la columna para limpiar filas vacías (manejando mayúsculas/minúsculas de la API)
+    columna_id = 'ID_Venta' if 'ID_Venta' in df_crudo.columns else ('id_venta' if 'id_venta' in df_crudo.columns else None)
+
+    if columna_id:
+        # Filtramos de inmediato cualquier fila donde el ID de venta esté vacío o en blanco
+        df = df_crudo[df_crudo[columna_id].astype(str).str.strip() != ''].copy()
     else:
         df = df_crudo.copy()
 
-    # Validación por si el archivo quedó completamente vacío tras la limpieza
+    # Validación por si el DataFrame quedó vacío tras la limpieza
     if df.empty:
         st.info("Aún no hay registros válidos con un ID de Venta en la base de datos.")
     else:
-        # MAPEADO RESILIENTE CON LAS COLUMNAS REALES DE HISTORICO_VENTAS
+        # MAPEADO DIRECTO DE CAMPOS CON HISTORICO_VENTAS
         columnas_reales = {
             'id_venta': 'ID_Venta',
             'cliente': 'Cliente',
@@ -114,22 +102,23 @@ else:
             'cantidad_kgs': 'Cantidad_KGS',
             'direccion': 'Sede_Despacho',
             'estado': 'Estado_Despacho',
-            'repartidor': 'Sede_Despacho', # Provisional mientras se añade campo de transportador específico
+            'repartidor': 'Sede_Despacho', # Provisional mientras se asigne transportador
             'fecha': 'Fecha_Hora'
         }
         
-        # Inyección segura de campos para prevenir cualquier KeyError si Sheets cambia
+        # Inyección segura: si la API los mandó en minúsculas, los empareja automáticamente
         for clave_app, columna_sheet in columnas_reales.items():
             if columna_sheet in df.columns:
                 df[clave_app] = df[columna_sheet]
-            elif clave_app not in df.columns:
+            elif clave_app in df.columns:
+                pass  # Si ya existe con el nombre en minúscula, lo dejamos quieto
+            else:
                 df[clave_app] = "N/A"
 
-        # Forzar formato numérico limpio en los kilogramos para sumatorias seguras
+        # Forzar formato numérico limpio en los kilogramos para las sumas
         df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
 
         # 4. MÉTRICAS CLAVE EN LA PARTE SUPERIOR (KPIs)
-        # Filtra todo lo que no esté marcado exactamente como 'entregado'
         pendientes = len(df[df['estado'].astype(str).str.lower() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
@@ -157,7 +146,6 @@ else:
             estado = str(fila['estado']).strip()
             clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
             
-            # Estructura visual adaptada a pantallas de smartphones
             card_html = f"""
             <div class="delivery-card">
                 <div style="display: flex; justify-content: space-between; align-items: start;">
