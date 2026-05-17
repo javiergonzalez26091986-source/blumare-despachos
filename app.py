@@ -57,14 +57,16 @@ st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; le
 st.markdown("---")
 
 # 3. CONEXIÓN Y DESCARGA DE DATOS CORREGIDA
-@st.cache_data(ttl=10)  # Sincronización rápida cada 10 segundos para los repartidores
+@st.cache_data(ttl=10)  # Sincronización rápida cada 10 segundos
 def descargar_datos_despacho():
     try:
         respuesta = requests.get(f"{URL_API}?tipo_operacion=ObtenerDespachos", timeout=10)
         resultado = respuesta.json()
         
+        # Si es una lista directa de registros
         if isinstance(resultado, list):
             return resultado
+        # Si viene envuelta en un diccionario con la clave "data"
         elif isinstance(resultado, dict) and "data" in resultado:
             return resultado.get("data", [])
             
@@ -78,48 +80,60 @@ datos_ventas = descargar_datos_despacho()
 if not datos_ventas:
     st.warning("No se encontraron registros de entregas en la pestaña Historico_Ventas o la API no respondió.")
 else:
-    # Convertimos los datos crudos a un DataFrame
+    # Convertimos a DataFrame inicial
     df_crudo = pd.DataFrame(datos_ventas)
 
-    # Buscamos la columna para limpiar filas vacías (manejando mayúsculas/minúsculas de la API)
-    columna_id = 'ID_Venta' if 'ID_Venta' in df_crudo.columns else ('id_venta' if 'id_venta' in df_crudo.columns else None)
+    # ESTABILIZACIÓN DE LLAVES: Forzamos a que todas las columnas sean minúsculas para evitar conflictos
+    df_crudo.columns = [str(col).lower().strip() for col in df_crudo.columns]
 
-    if columna_id:
-        # Filtramos de inmediato cualquier fila donde el ID de venta esté vacío o en blanco
-        df = df_crudo[df_crudo[columna_id].astype(str).str.strip() != ''].copy()
+    # Buscamos variaciones comunes del ID de Venta en minúsculas ('id_venta', 'id_venta ', etc.)
+    columna_id_min = None
+    for col in df_crudo.columns:
+        if 'id_venta' in col or 'id_lote_origen' in col:  # Si no encuentra venta, busca lote para guiarse
+            columna_id_min = col
+            break
+            
+    if not columna_id_min and len(df_crudo.columns) > 0:
+        # Si por alguna razón sigue sin hacer match, tomamos la primera columna disponible como ID
+        columna_id_min = df_crudo.columns[0]
+
+    if columna_id_min:
+        # Filtramos de raíz eliminando filas vacías, nulas o con texto "nan"
+        df = df_crudo[
+            (df_crudo[columna_id_min].astype(str).str.strip() != '') & 
+            (df_crudo[columna_id_min].notna()) & 
+            (df_crudo[columna_id_min].astype(str).str.lower() != 'nan')
+        ].copy()
     else:
         df = df_crudo.copy()
 
-    # Validación por si el DataFrame quedó vacío tras la limpieza
+    # Validación final del DataFrame limpio
     if df.empty:
-        st.info("Aún no hay registros válidos con un ID de Venta en la base de datos.")
+        st.info("Aún no hay registros válidos con contenido en la base de datos.")
     else:
-        # MAPEADO DIRECTO DE CAMPOS CON HISTORICO_VENTAS
-        columnas_reales = {
-            'id_venta': 'ID_Venta',
-            'cliente': 'Cliente',
-            'producto': 'Producto',
-            'cantidad_kgs': 'Cantidad_KGS',
-            'direccion': 'Sede_Despacho',
-            'estado': 'Estado_Despacho',
-            'repartidor': 'Sede_Despacho', # Provisional mientras se asigne transportador
-            'fecha': 'Fecha_Hora'
-        }
-        
-        # Inyección segura: si la API los mandó en minúsculas, los empareja automáticamente
-        for clave_app, columna_sheet in columnas_reales.items():
-            if columna_sheet in df.columns:
-                df[clave_app] = df[columna_sheet]
-            elif clave_app in df.columns:
-                pass  # Si ya existe con el nombre en minúscula, lo dejamos quieto
-            else:
-                df[clave_app] = "N/A"
+        # MAPEADO NORMALIZADO (Buscamos coincidencias parciales en minúsculas)
+        def extraer_columna(df_obj, palabras_clave):
+            for col in df_obj.columns:
+                if any(pc in col for pc in palabras_clave):
+                    return df_obj[col]
+            return pd.Series(["N/A"] * len(df_obj), index=df_obj.index)
 
-        # Forzar formato numérico limpio en los kilogramos para las sumas
+        # Asignación inteligente basada en lo que contenga el JSON de tu macro
+        df['id_venta'] = extraer_columna(df, ['id_venta', 'venta'])
+        df['cliente'] = extraer_columna(df, ['cliente', 'nombre'])
+        df['producto'] = extraer_columna(df, ['producto', 'item'])
+        df['cantidad_kgs'] = extraer_columna(df, ['cantidad_kgs', 'kgs', 'cantidad'])
+        df['direccion'] = extraer_columna(df, ['sede_despacho', 'direccion', 'sede'])
+        df['estado'] = extraer_columna(df, ['estado_despacho', 'estado'])
+        df['repartidor'] = extraer_columna(df, ['sede_despacho', 'repartidor'])
+        df['fecha'] = extraer_columna(df, ['fecha_hora', 'fecha'])
+
+        # Forzar formato numérico limpio en los kilogramos
         df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
 
         # 4. MÉTRICAS CLAVE EN LA PARTE SUPERIOR (KPIs)
-        pendientes = len(df[df['estado'].astype(str).str.lower() != 'entregado'])
+        # Cuenta los elementos cuyo estado no sea 'entregado'
+        pendientes = len(df[df['estado'].astype(str).str.lower().str.strip() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
         col1, col2 = st.columns(2)
