@@ -56,83 +56,77 @@ st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLU
 st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
 st.markdown("---")
 
-# 3. CONEXIÓN Y DESCARGA DE DATOS CORREGIDA
-@st.cache_data(ttl=10)  # Sincronización rápida cada 10 segundos
+# 3. CONEXIÓN Y DESCARGA DE DATOS FORZANDO "Historico_Ventas"
+@st.cache_data(ttl=5)  # Sincronización rápida de 5 segundos
 def descargar_datos_despacho():
     try:
-        respuesta = requests.get(f"{URL_API}?tipo_operacion=ObtenerDespachos", timeout=10)
+        # Enviamos explícitamente los parámetros para asegurar que intente leer las ventas
+        url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos&pestana=Historico_Ventas"
+        respuesta = requests.get(url_con_parametros, timeout=10)
         resultado = respuesta.json()
         
-        # Si es una lista directa de registros
         if isinstance(resultado, list):
             return resultado
-        # Si viene envuelta en un diccionario con la clave "data"
         elif isinstance(resultado, dict) and "data" in resultado:
             return resultado.get("data", [])
-            
         return []
     except Exception as e:
         st.error(f"Error de conexión con la central: {e}")
         return []
         
-datos_ventas = descargar_datos_despacho()
+datos_crudos = descargar_datos_despacho()
 
-if not datos_ventas:
-    st.warning("No se encontraron registros de entregas en la pestaña Historico_Ventas o la API no respondió.")
+if not datos_crudos:
+    st.warning("No se recibieron datos de la central o la lista está vacía.")
 else:
-    # Convertimos a DataFrame inicial
-    df_crudo = pd.DataFrame(datos_ventas)
+    # Convertimos la matriz JSON a DataFrame de Pandas
+    df_base = pd.DataFrame(datos_crudos)
 
-    # ESTABILIZACIÓN DE LLAVES: Forzamos a que todas las columnas sean minúsculas para evitar conflictos
-    df_crudo.columns = [str(col).lower().strip() for col in df_crudo.columns]
-
-    # Buscamos variaciones comunes del ID de Venta en minúsculas ('id_venta', 'id_venta ', etc.)
-    columna_id_min = None
-    for col in df_crudo.columns:
-        if 'id_venta' in col or 'id_lote_origen' in col:  # Si no encuentra venta, busca lote para guiarse
-            columna_id_min = col
-            break
-            
-    if not columna_id_min and len(df_crudo.columns) > 0:
-        # Si por alguna razón sigue sin hacer match, tomamos la primera columna disponible como ID
-        columna_id_min = df_crudo.columns[0]
-
-    if columna_id_min:
-        # Filtramos de raíz eliminando filas vacías, nulas o con texto "nan"
-        df = df_crudo[
-            (df_crudo[columna_id_min].astype(str).str.strip() != '') & 
-            (df_crudo[columna_id_min].notna()) & 
-            (df_crudo[columna_id_min].astype(str).str.lower() != 'nan')
-        ].copy()
+    # DETECCIÓN DE ESTRUCTURA: ¿Nos mandó el Inventario (25 filas) o las Ventas Reales?
+    # Si la fila tiene menos de 6 columnas o la columna 0 contiene "PLAQUETA", es que sigue leyendo el Inventario por error del .gs
+    ejemplo_celda = str(df_base.iloc[0, 0]).upper() if not df_base.empty else ""
+    
+    if "PLAQUETA" in ejemplo_celda or len(df_base.columns) == 5:
+        # Alerta informativa para ti mientras ajustas el Apps Script si es necesario
+        st.sidebar.error("⚠️ La API está retornando el Inventario de Lotes en lugar de Ventas.")
+        
+        # Mapeo de emergencia para que la app no rompa usando los datos que enviaste
+        df = df_base.copy()
+        df['id_venta'] = df[4] if 4 in df.columns else "N/A"
+        df['cliente'] = "Inventario Central"
+        df['producto'] = df[0]
+        df['cantidad_kgs'] = df[1] if 1 in df.columns else 0
+        df['direccion'] = df[2] if 2 in df.columns else "Cali"
+        df['estado'] = "Disponible"
+        df['repartidor'] = "Bodega"
+        df['fecha'] = "Hoy"
     else:
-        df = df_crudo.copy()
+        # ¡ESTRUCTURA DE VENTAS EXCELENTE! Mapeo según la foto de tu Excel (Columnas A=0, B=1, C=2, D=3, E=4, G=6, K=10)
+        # Limpiamos filas donde la columna A (ID_Venta) esté vacía
+        df_base = df_base[df_base[0].astype(str).str.strip() != ''].copy()
+        df_base = df_base[df_base[0].astype(str).str.upper() != 'ID_VENTA'].copy() # Ignora el encabezado físico si viene
+        
+        df = pd.DataFrame()
+        df['id_venta'] = df_base[0] if 0 in df_base.columns else "N/A"
+        df['fecha'] = df_base[1] if 1 in df_base.columns else "N/A"
+        df['direccion'] = df_base[2] if 2 in df_base.columns else "N/A"
+        df['cliente'] = df_base[3] if 3 in df_base.columns else "N/A"
+        df['producto'] = df_base[4] if 4 in df_base.columns else "N/A"
+        df['cantidad_kgs'] = df_base[6] if 6 in df_base.columns else 0
+        df['estado'] = df_base[10] if 10 in df_base.columns else "Pendiente"
+        df['repartidor'] = df_base[2] # Copia la sede de despacho temporalmente
 
-    # Validación final del DataFrame limpio
+    # Limpieza final y formateo numérico
+    df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
+    
+    # Filtrar filas vacías accidentales de control de base de datos
+    df = df[df['id_venta'].astype(str).str.strip() != ''].copy()
+
     if df.empty:
-        st.info("Aún no hay registros válidos con contenido en la base de datos.")
+        st.info("No hay registros activos para mostrar.")
     else:
-        # MAPEADO NORMALIZADO (Buscamos coincidencias parciales en minúsculas)
-        def extraer_columna(df_obj, palabras_clave):
-            for col in df_obj.columns:
-                if any(pc in col for pc in palabras_clave):
-                    return df_obj[col]
-            return pd.Series(["N/A"] * len(df_obj), index=df_obj.index)
-
-        # Asignación inteligente basada en lo que contenga el JSON de tu macro
-        df['id_venta'] = extraer_columna(df, ['id_venta', 'venta'])
-        df['cliente'] = extraer_columna(df, ['cliente', 'nombre'])
-        df['producto'] = extraer_columna(df, ['producto', 'item'])
-        df['cantidad_kgs'] = extraer_columna(df, ['cantidad_kgs', 'kgs', 'cantidad'])
-        df['direccion'] = extraer_columna(df, ['sede_despacho', 'direccion', 'sede'])
-        df['estado'] = extraer_columna(df, ['estado_despacho', 'estado'])
-        df['repartidor'] = extraer_columna(df, ['sede_despacho', 'repartidor'])
-        df['fecha'] = extraer_columna(df, ['fecha_hora', 'fecha'])
-
-        # Forzar formato numérico limpio en los kilogramos
-        df['cantidad_kgs'] = pd.to_numeric(df['cantidad_kgs'], errors='coerce').fillna(0.0)
-
         # 4. MÉTRICAS CLAVE EN LA PARTE SUPERIOR (KPIs)
-        # Cuenta los elementos cuyo estado no sea 'entregado'
+        # Cuenta los envíos que no dicen exactamente 'entregado'
         pendientes = len(df[df['estado'].astype(str).str.lower().str.strip() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
@@ -157,24 +151,24 @@ else:
         st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
         for _, fila in df.iterrows():
-            estado = str(fila['estado']).strip()
-            clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
+            est_str = str(fila['estado']).strip()
+            clase_badge = "badge-entregado" if est_str.lower() == "entregado" else "badge-pendiente"
             
             card_html = f"""
             <div class="delivery-card">
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                     <div>
-                        <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{fila['id_venta']}</span>
+                        <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID REGISTRO #{fila['id_venta']}</span>
                         <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
                     </div>
-                    <span class="{clase_badge}">{estado.upper()}</span>
+                    <span class="{clase_badge}">{est_str.upper()}</span>
                 </div>
                 <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
                     <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                    <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
+                    <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Ubicación:</b> {fila['direccion']}</p>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff;">
-                    <span>🏢 Central: {fila['repartidor']}</span>
+                    <span>🏢 Origen/Zona: {fila['repartidor']}</span>
                     <span>📅 Registro: {fila['fecha']}</span>
                 </div>
             </div>
