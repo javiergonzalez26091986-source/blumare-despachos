@@ -5,9 +5,16 @@ import datetime
 import os
 
 # =============================================================================
-# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL
+# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL Y PARÁMETROS ANTI-INACTIVIDAD
 # =============================================================================
-# --- ESTILOS CSS ---
+st.set_page_config(
+    page_title="Blumare - Despachos",
+    page_icon="🚚",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
+
+# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -26,19 +33,7 @@ st.markdown("""
         border-color: #dc3545 !important;
         color: white !important;
     }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.set_page_config(
-    page_title="Blumare - Despachos",
-    page_icon="🚚",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-# Estilos CSS personalizados para lograr un look Premium Dark y tarjetas estilo App Móvil
-st.markdown("""
-    <style>
+    
     /* Fondo general oscuro */
     .stApp {
         background-color: #0d1117;
@@ -86,7 +81,20 @@ st.markdown("""
         border-color: #3fb950 !important;
     }
     </style>
-""", unsafe_allow_html=True)
+    
+    <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
+    <script>
+        // Esta función realiza una micro-interacción interna cada 5 minutos (300000 ms)
+        // simulando actividad constante para que Streamlit Cloud no duerma la sesión.
+        setInterval(function() {
+            var iframe = document.getElementById('anti-idle-iframe');
+            if (iframe) {
+                iframe.src = 'about:blank?keepalive=' + Date.now();
+                console.log("Blumare Keep-Alive: Conexión refrescada.");
+            }
+        }, 300000); 
+    </script>
+    """, unsafe_allow_html=True)
 
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
@@ -97,13 +105,10 @@ URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS
 nombre_logo = "logoBlumare.jpeg"
 
 if os.path.exists(nombre_logo):
-    # Usamos st.logo o inyección HTML para garantizar el centrado exacto en la app web
     import base64
-    
     with open(nombre_logo, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read()).decode()
     
-    # Renderizado con HTML/CSS para control total de posición y tamaño (130px)
     st.markdown(
         f"""
         <div style="display: flex; justify-content: center; margin-bottom: 10px;">
@@ -113,7 +118,6 @@ if os.path.exists(nombre_logo):
         unsafe_allow_html=True
     )
 else:
-    # Failsafe informativo por si el entorno de ejecución no ve el archivo
     st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
 
 # =============================================================================
