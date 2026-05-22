@@ -210,43 +210,49 @@ else:
             ]
 
         # =============================================================================
-        # 6. HOJA DE RUTA EN TIEMPO REAL
+        # 6. HOJA DE RUTA EN TIEMPO REAL (FILTRADA: SOLO MUESTRA PENDIENTES)
         # =============================================================================
         st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
-        for index, fila in df.iterrows():
-            id_v = fila['id_venta']
-            estado = fila['estado']
-            clase_badge = "badge-entregado" if estado.lower() == "entregado" else "badge-pendiente"
-            
-            # Renderizado visual de la tarjeta
-            card_html = f"""
-            <div class="delivery-card">
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{id_v}</span>
-                        <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
+        # --- FILTRO CLAVE ---
+        # Filtramos el DataFrame para que SOLO muestre las ventas que NO estén entregadas
+        df_pendientes = df[df['estado'].str.lower() != 'entregado']
+
+        if df_pendientes.empty:
+            st.success("¡Felicidades! 🎉 Todas las entregas del día han sido completadas.")
+        else:
+            for index, fila in df_pendientes.iterrows():
+                id_v = fila['id_venta']
+                estado = fila['estado']
+                clase_badge = "badge-pendiente" # Como solo entran pendientes, siempre usarán este estilo
+                
+                # Renderizado visual de la tarjeta
+                card_html = f"""
+                <div class="delivery-card">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{id_v}</span>
+                            <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
+                        </div>
+                        <span class="{clase_badge}">{estado.upper()}</span>
                     </div>
-                    <span class="{clase_badge}">{estado.upper()}</span>
+                    <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
+                        <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
+                        <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff; margin-bottom: 5px;">
+                        <span>🏢 Zona/Repartidor: {fila['repartidor']}</span>
+                        <span>📅 Registro: {fila['fecha']}</span>
+                    </div>
                 </div>
-                <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
-                    <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                    <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff; margin-bottom: 5px;">
-                    <span>🏢 Zona/Repartidor: {fila['repartidor']}</span>
-                    <span>📅 Registro: {fila['fecha']}</span>
-                </div>
-            </div>
-            """
-            st.markdown(card_html, unsafe_allow_html=True)
-            
-            # Si el registro está Pendiente, habilitamos su propio botón físico debajo de la tarjeta
-            if estado.lower() != "entregado":
+                """
+                st.markdown(card_html, unsafe_allow_html=True)
+                
+                # Habilitamos el botón físico debajo de la tarjeta para confirmar
                 if st.button(f"Confirmar Entrega ✅", key=f"btn_{id_v}_{index}"):
                     registrar_entrega_en_sheets(id_v)
-            
-            st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+                
+                st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
 # 7. BOTÓN MANUAL DE REFRESCAR
