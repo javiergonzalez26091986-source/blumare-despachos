@@ -70,17 +70,18 @@ st.markdown("""
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
-# LOGO DE LA APP (CON VERIFICACIÓN DE RUTA)
+# LOGO DE LA APP (CON TAMAÑO AJUSTADO PARA MÓVIL)
 # =============================================================================
 nombre_logo = "logoBlumare.jpeg"
 
 if os.path.exists(nombre_logo):
-    # Columnas balanceadas para centrar el logo en pantallas móviles y web
+    # Columnas balanceadas para mantener el logo perfectamente centrado
     col_log1, col_log2, col_log3 = st.columns([1, 2, 1])
     with col_log2:
-        st.image(nombre_logo, use_container_width=True)
+        # Cambiamos 'use_container_width=True' por un ancho controlado de 130px
+        st.image(nombre_logo, width=130)
 else:
-    # Failsafe informativo por si el entorno de Jupyter o ejecución no ve el archivo
+    # Failsafe informativo por si el entorno de ejecución no ve el archivo
     st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
 
 # =============================================================================
