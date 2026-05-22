@@ -2,8 +2,11 @@ import streamlit as st
 import requests
 import pandas as pd
 import datetime
+import os
 
+# =============================================================================
 # 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL
+# =============================================================================
 st.set_page_config(
     page_title="Blumare - Despachos",
     page_icon="🚚",
@@ -66,25 +69,33 @@ st.markdown("""
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
-# LOGO CENTRADO DE BLUMARE
-col_log1, col_log2, col_log3 = st.columns([1, 2, 1])
-with col_log2:
-    try:
-        st.image("logoBlumare.jpeg", use_container_width=True)
-    except Exception:
-        # Failsafe por si el entorno de ejecución temporal no encuentra el archivo inmediatamente
-        pass
+# =============================================================================
+# LOGO DE LA APP (CON VERIFICACIÓN DE RUTA)
+# =============================================================================
+nombre_logo = "logoBlumare.jpeg"
 
+if os.path.exists(nombre_logo):
+    # Columnas balanceadas para centrar el logo en pantallas móviles y web
+    col_log1, col_log2, col_log3 = st.columns([1, 2, 1])
+    with col_log2:
+        st.image(nombre_logo, use_container_width=True)
+else:
+    # Failsafe informativo por si el entorno de Jupyter o ejecución no ve el archivo
+    st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
+
+# =============================================================================
 # 2. ENCABEZADO DE LA APP
+# =============================================================================
 st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
 st.markdown("---")
 
+# =============================================================================
 # 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA REAL)
+# =============================================================================
 @st.cache_data(ttl=2)
 def descargar_datos_despacho():
     try:
-        # Apuntamos a la nueva operación controlada por parámetro
         url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos"
         respuesta = requests.get(url_con_parametros, timeout=10)
         resultado = respuesta.json()
@@ -99,10 +110,7 @@ def descargar_datos_despacho():
 # FUNCIÓN PARA REPORTAR LA ENTREGA A GOOGLE SHEETS (ESCRITURA CON HORA)
 def registrar_entrega_en_sheets(id_venta):
     try:
-        # Capturamos la marca de tiempo exacta del dispositivo móvil (Ej: 2026-05-17 17:54:20)
         ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # Enviamos el id, el estado y el nuevo campo de hora_entrega
         url_actualizar = f"{URL_API}?tipo_operacion=ActualizarEstado&id_venta={id_venta}&nuevo_estado=Entregado&hora_entrega={ahora}"
         respuesta = requests.get(url_actualizar, timeout=10)
         
@@ -139,7 +147,9 @@ else:
     if df.empty:
         st.info("No hay registros activos de despacho en este momento.")
     else:
+        # =============================================================================
         # 4. METRICAS CLAVE EN TIEMPO REAL
+        # =============================================================================
         pendientes = len(df[df['estado'].str.lower() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
@@ -151,7 +161,9 @@ else:
 
         st.markdown("##")
 
+        # =============================================================================
         # 5. BUSCADOR INTERACTIVO
+        # =============================================================================
         busqueda = st.text_input("🔍 Buscar por Cliente o Producto:", placeholder="Escribe para filtrar la ruta...")
 
         if busqueda:
@@ -160,7 +172,9 @@ else:
                 df['producto'].str.contains(busqueda, case=False)
             ]
 
+        # =============================================================================
         # 6. HOJA DE RUTA EN TIEMPO REAL
+        # =============================================================================
         st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
         for index, fila in df.iterrows():
@@ -197,7 +211,9 @@ else:
             
             st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
+# =============================================================================
 # 7. BOTÓN MANUAL DE REFRESCAR
+# =============================================================================
 if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh"):
     st.cache_data.clear()
     st.rerun()
