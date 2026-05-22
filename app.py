@@ -66,6 +66,15 @@ st.markdown("""
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
+# LOGO CENTRADO DE BLUMARE
+col_log1, col_log2, col_log3 = st.columns([1, 2, 1])
+with col_log2:
+    try:
+        st.image("logoBlumare.jpeg", use_container_width=True)
+    except Exception:
+        # Failsafe por si el entorno de ejecución temporal no encuentra el archivo inmediatamente
+        pass
+
 # 2. ENCABEZADO DE LA APP
 st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
