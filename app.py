@@ -70,16 +70,26 @@ st.markdown("""
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
-# LOGO DE LA APP (CON TAMAÑO AJUSTADO PARA MÓVIL)
+# LOGO DE LA APP (CENTRADO ABSOLUTO Y TAMAÑO AJUSTADO)
 # =============================================================================
 nombre_logo = "logoBlumare.jpeg"
 
 if os.path.exists(nombre_logo):
-    # Columnas balanceadas para mantener el logo perfectamente centrado
-    col_log1, col_log2, col_log3 = st.columns([1, 2, 1])
-    with col_log2:
-        # Cambiamos 'use_container_width=True' por un ancho controlado de 130px
-        st.image(nombre_logo, width=130)
+    # Usamos st.logo o inyección HTML para garantizar el centrado exacto en la app web
+    import base64
+    
+    with open(nombre_logo, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode()
+    
+    # Renderizado con HTML/CSS para control total de posición y tamaño (130px)
+    st.markdown(
+        f"""
+        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+            <img src="data:image/jpeg;base64,{encoded_string}" width="130" style="border-radius: 10px;">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 else:
     # Failsafe informativo por si el entorno de ejecución no ve el archivo
     st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
