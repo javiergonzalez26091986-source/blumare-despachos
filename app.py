@@ -5,11 +5,18 @@ import datetime
 import os
 
 # =============================================================================
-# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL Y PARÁMETROS ANTI-INACTIVIDAD
+# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL (ÍCONO CORPORATIVO Y ANTI-INACTIVIDAD)
 # =============================================================================
+# Nombre del archivo para el ícono de la pestaña (Favicon)
+icono_pestana = "logoBlumare.ico"
+
+# Si por alguna razón no encuentra el .ico, usamos el .jpeg como respaldo
+if not os.path.exists(icono_pestana):
+    icono_pestana = "logoBlumare.jpeg"
+
 st.set_page_config(
     page_title="Blumare - Despachos",
-    page_icon="🚚",
+    page_icon=icono_pestana if os.path.exists(icono_pestana) else "🚚",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
@@ -214,7 +221,6 @@ else:
         # =============================================================================
         st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
-        # --- FILTRO CLAVE ---
         # Filtramos el DataFrame para que SOLO muestre las ventas que NO estén entregadas
         df_pendientes = df[df['estado'].str.lower() != 'entregado']
 
@@ -224,7 +230,7 @@ else:
             for index, fila in df_pendientes.iterrows():
                 id_v = fila['id_venta']
                 estado = fila['estado']
-                clase_badge = "badge-pendiente" # Como solo entran pendientes, siempre usarán este estilo
+                clase_badge = "badge-pendiente"
                 
                 # Renderizado visual de la tarjeta
                 card_html = f"""
