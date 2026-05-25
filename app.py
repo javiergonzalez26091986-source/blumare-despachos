@@ -7,10 +7,8 @@ import os
 # =============================================================================
 # 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL (ÍCONO CORPORATIVO Y ANTI-INACTIVIDAD)
 # =============================================================================
-# Nombre del archivo para el ícono de la pestaña (Favicon)
 icono_pestana = "logoBlumare.ico"
 
-# Si por alguna razón no encuentra el .ico, usamos el .jpeg como respaldo
 if not os.path.exists(icono_pestana):
     icono_pestana = "logoBlumare.jpeg"
 
@@ -21,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
+# Inyección de estilos CSS PREMIUM y código JavaScript Keep-Alive
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -30,69 +28,103 @@ st.markdown("""
     .stAppDeployButton {display:none;}
     div[data-testid="stToolbar"] { visibility: hidden !important; }
     
-    div.stButton > button:first-child[kind="primary"] {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
-        color: white !important;
+    /* Fondo general oscuro de la App */
+    .stApp {
+        background-color: #090c10;
+        background-image: radial-gradient(circle at 50% 0%, #161b22 0%, #090c10 70%);
     }
-    .stColumn div.stButton > button[kind="primary"] {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
-        color: white !important;
+
+    /* Animación de entrada suave para las tarjetas */
+    @keyframes slideUpFade {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tarjetas de entregas (Verdadero Glassmorphism Premium) */
+    .delivery-card {
+        background: linear-gradient(145deg, rgba(22, 27, 34, 0.7), rgba(13, 17, 23, 0.8));
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 20px;
+        padding: 22px;
+        margin-bottom: 5px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        animation: slideUpFade 0.6s ease-out both;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     
-    /* Fondo general oscuro */
-    .stApp {
-        background-color: #0d1117;
+    .delivery-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 240, 255, 0.08);
+        border: 1px solid rgba(0, 240, 255, 0.2);
     }
-    /* Tarjetas de entregas (Glassmorphism) */
-    .delivery-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    }
-    /* Badges de estado */
+
+    /* Badges de estado refinados */
     .badge-pendiente {
-        background-color: rgba(241, 196, 15, 0.15);
+        background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(243, 156, 18, 0.2));
         color: #f1c40f;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(241, 196, 15, 0.3);
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        border: 1px solid rgba(241, 196, 15, 0.4);
+        box-shadow: 0 0 10px rgba(241, 196, 15, 0.1);
     }
-    .badge-entregado {
-        background-color: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(46, 204, 113, 0.3);
-    }
-    /* Ajuste para los botones de entrega */
+
+    /* Ajuste para TODOS los botones (Gradiente Esmeralda Premium) */
     div.stButton > button {
         width: 100%;
-        background-color: #238636 !important;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
         color: white !important;
-        border: 1px solid #30853e !important;
-        border-radius: 8px !important;
-        padding: 6px 0px !important;
-        font-weight: bold !important;
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 10px 0px !important;
+        font-weight: 800 !important;
+        letter-spacing: 1px !important;
+        text-transform: uppercase !important;
+        font-size: 13px !important;
+        box-shadow: 0 6px 15px rgba(56, 239, 125, 0.25) !important;
+        transition: all 0.3s ease !important;
     }
     div.stButton > button:hover {
-        background-color: #2ea043 !important;
-        border-color: #3fb950 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 20px rgba(56, 239, 125, 0.4) !important;
+    }
+    div.stButton > button:active {
+        transform: translateY(1px) !important;
+    }
+
+    /* Estilización de las métricas superiores */
+    [data-testid="stMetricValue"] {
+        color: #00f0ff !important;
+        font-weight: 900 !important;
+        text-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    }
+    [data-testid="stMetricLabel"] {
+        color: #8b949e !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 12px !important;
+    }
+    
+    /* Inputs y buscadores */
+    .stTextInput > div > div > input {
+        background-color: rgba(22, 27, 34, 0.6) !important;
+        border: 1px solid #30363d !important;
+        border-radius: 10px !important;
+        color: white !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #00f0ff !important;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
     }
     </style>
     
     <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
     <script>
-        // Esta función realiza una micro-interacción interna cada 5 minutos (300000 ms)
-        // simulando actividad constante para que Streamlit Cloud no duerma la sesión.
         setInterval(function() {
             var iframe = document.getElementById('anti-idle-iframe');
             if (iframe) {
@@ -103,11 +135,10 @@ st.markdown("""
     </script>
     """, unsafe_allow_html=True)
 
-# URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
-# LOGO DE LA APP (CENTRADO ABSOLUTO Y TAMAÑO AJUSTADO)
+# LOGO DE LA APP Y ENCABEZADO
 # =============================================================================
 nombre_logo = "logoBlumare.jpeg"
 
@@ -118,21 +149,21 @@ if os.path.exists(nombre_logo):
     
     st.markdown(
         f"""
-        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-            <img src="data:image/jpeg;base64,{encoded_string}" width="130" style="border-radius: 10px;">
+        <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 10px;">
+            <img src="data:image/jpeg;base64,{encoded_string}" width="110" style="border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
         </div>
         """,
         unsafe_allow_html=True
     )
 else:
-    st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
+    st.error(f"⚠️ Archivo del logo no detectado.")
 
-# =============================================================================
-# 2. ENCABEZADO DE LA APP
-# =============================================================================
-st.markdown("<h1 style='text-align: center; color: white; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #00f0ff; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
-st.markdown("---")
+# Títulos con Gradiente Metálico Premium
+st.markdown("<h1 style='text-align: center; font-weight: 900; margin-bottom: 0; font-size: 32px; background: -webkit-linear-gradient(45deg, #ffffff, #00f0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>BLUMARE</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #8b949e; font-weight: 800; letter-spacing: 4px; margin-top: 0; font-size: 11px;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
+
+# Línea separadora difuminada
+st.markdown("<div style='height: 1px; background: linear-gradient(90deg, transparent, #30363d, transparent); margin: 25px 0;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
 # 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA REAL)
@@ -151,7 +182,6 @@ def descargar_datos_despacho():
         st.error(f"Error de conexión con la central: {e}")
         return []
 
-# FUNCIÓN PARA REPORTAR LA ENTREGA A GOOGLE SHEETS (ESCRITURA CON HORA)
 def registrar_entrega_en_sheets(id_venta):
     try:
         ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -160,7 +190,7 @@ def registrar_entrega_en_sheets(id_venta):
         
         if respuesta.status_code == 200:
             st.toast(f"¡Pedido #{id_venta} marcado como Entregado! 🎉", icon="✅")
-            st.cache_data.clear() # Limpia el caché inmediatamente para forzar la recarga
+            st.cache_data.clear() 
             st.rerun()
         else:
             st.error("La central recibió la orden pero no pudo actualizar la fila.")
@@ -172,7 +202,6 @@ datos_crudos = descargar_datos_despacho()
 if not datos_crudos:
     st.warning("No se recibieron datos de la central o la lista de despachos está vacía.")
 else:
-    # Procesamiento y Mapeo directo desde la matriz real de Google Sheets
     df_base = pd.DataFrame(datos_crudos)
     
     df = pd.DataFrame()
@@ -183,9 +212,8 @@ else:
     df['producto'] = df_base[4].astype(str)
     df['cantidad_kgs'] = pd.to_numeric(df_base[6], errors='coerce').fillna(0.0)
     df['estado'] = df_base[10].astype(str).str.strip()
-    df['repartidor'] = df_base[2].astype(str) # Se usa la sede de despacho como Zona de manera predeterminada
+    df['repartidor'] = df_base[2].astype(str)
 
-    # Filtro de seguridad para remover registros o encabezados vacíos
     df = df[df['id_venta'] != ''].copy()
 
     if df.empty:
@@ -203,7 +231,7 @@ else:
         with col2:
             st.metric(label="Total Kilos Ruta", value=f"{total_kgs:,.1f} KG")
 
-        st.markdown("##")
+        st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
         # =============================================================================
         # 5. BUSCADOR INTERACTIVO
@@ -217,52 +245,53 @@ else:
             ]
 
         # =============================================================================
-        # 6. HOJA DE RUTA EN TIEMPO REAL (FILTRADA: SOLO MUESTRA PENDIENTES)
+        # 6. HOJA DE RUTA EN TIEMPO REAL
         # =============================================================================
-        st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='color: #8b949e; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 20px; margin-bottom: 15px;'>📍 HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
         
-        # Filtramos el DataFrame para que SOLO muestre las ventas que NO estén entregadas
         df_pendientes = df[df['estado'].str.lower() != 'entregado']
 
         if df_pendientes.empty:
             st.success("¡Felicidades! 🎉 Todas las entregas del día han sido completadas.")
         else:
+            # Añadimos un pequeño retraso en la animación (delay) según el índice para efecto cascada
             for index, fila in df_pendientes.iterrows():
                 id_v = fila['id_venta']
                 estado = fila['estado']
                 clase_badge = "badge-pendiente"
+                delay = (index % 10) * 0.1 # Efecto cascada
                 
-                # Renderizado visual de la tarjeta
+                # HTML mejorado para la tarjeta
                 card_html = f"""
-                <div class="delivery-card">
+                <div class="delivery-card" style="animation-delay: {delay}s;">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <div>
-                            <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{id_v}</span>
-                            <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
+                            <span style="font-family: 'Courier New', Courier, monospace; color: #58a6ff; font-size: 11px; font-weight: bold; background: rgba(88, 166, 255, 0.1); padding: 3px 8px; border-radius: 6px;">#{id_v}</span>
+                            <h4 style="color: white; margin: 8px 0 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.5px;">{fila['cliente']}</h4>
                         </div>
                         <span class="{clase_badge}">{estado.upper()}</span>
                     </div>
-                    <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
-                        <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                        <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
+                    <div style="margin-top: 18px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; font-size: 14px;">
+                        <p style="margin: 0 0 8px 0; color: #c9d1d9;">📦 <span style="color: #8b949e; font-size: 12px; text-transform: uppercase;">Producto:</span> <br><b>{fila['producto']}</b> — <span style="color: #00f0ff; font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0,240,255,0.4);">{fila['cantidad_kgs']} KGS</span></p>
+                        <p style="margin: 0; color: #c9d1d9;">📍 <span style="color: #8b949e; font-size: 12px; text-transform: uppercase;">Destino:</span> <br><b>{fila['direccion']}</b></p>
                     </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff; margin-bottom: 5px;">
-                        <span>🏢 Zona/Repartidor: {fila['repartidor']}</span>
-                        <span>📅 Registro: {fila['fecha']}</span>
+                    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 11px; color: #8b949e; font-weight: 600; margin-bottom: 10px;">
+                        <span>🏢 Repartidor: <span style="color: #c9d1d9;">{fila['repartidor']}</span></span>
+                        <span>📅 <span style="color: #c9d1d9;">{fila['fecha']}</span></span>
                     </div>
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
                 
-                # Habilitamos el botón físico debajo de la tarjeta para confirmar
-                if st.button(f"Confirmar Entrega ✅", key=f"btn_{id_v}_{index}"):
+                if st.button(f"CONFIRMAR ENTREGA", key=f"btn_{id_v}_{index}"):
                     registrar_entrega_en_sheets(id_v)
                 
-                st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
 # 7. BOTÓN MANUAL DE REFRESCAR
 # =============================================================================
-if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh"):
+st.markdown("<div style='margin-top: 40px;'></div>", unsafe_allow_html=True)
+if st.button("🔄 SINCRONIZAR DATOS AHORA", key="btn_global_refresh"):
     st.cache_data.clear()
     st.rerun()
