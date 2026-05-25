@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS PREMIUM y código JavaScript Keep-Alive
+# Inyección de estilos CSS ULTRA-PREMIUM y código JavaScript Keep-Alive
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
@@ -40,7 +40,7 @@ st.markdown("""
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Tarjetas de entregas (Verdadero Glassmorphism Premium) */
+    /* Tarjetas de entregas (Glassmorphism) */
     .delivery-card {
         background: linear-gradient(145deg, rgba(22, 27, 34, 0.7), rgba(13, 17, 23, 0.8));
         backdrop-filter: blur(12px);
@@ -60,7 +60,7 @@ st.markdown("""
         border: 1px solid rgba(0, 240, 255, 0.2);
     }
 
-    /* Badges de estado refinados */
+    /* Badges de estado */
     .badge-pendiente {
         background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(243, 156, 18, 0.2));
         color: #f1c40f;
@@ -73,30 +73,83 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(241, 196, 15, 0.1);
     }
 
-    /* Ajuste para TODOS los botones (Gradiente Esmeralda Premium) */
+    /* ===================================================================== */
+    /* 🔥 NUEVO DISEÑO ULTRA-PREMIUM PARA LOS BOTONES 🔥                     */
+    /* ===================================================================== */
+    
+    /* Base compartida para todos los botones */
     div.stButton > button {
         width: 100%;
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important;
-        color: white !important;
-        border: none !important;
         border-radius: 12px !important;
-        padding: 10px 0px !important;
-        font-weight: 800 !important;
-        letter-spacing: 1px !important;
+        padding: 14px 0px !important;
+        font-weight: 900 !important;
+        letter-spacing: 2px !important;
         text-transform: uppercase !important;
         font-size: 13px !important;
-        box-shadow: 0 6px 15px rgba(56, 239, 125, 0.25) !important;
-        transition: all 0.3s ease !important;
-    }
-    div.stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 8px 20px rgba(56, 239, 125, 0.4) !important;
-    }
-    div.stButton > button:active {
-        transform: translateY(1px) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        z-index: 1 !important;
+        backdrop-filter: blur(5px) !important;
     }
 
-    /* Estilización de las métricas superiores */
+    /* Efecto de barrido de luz (Shine) al interactuar */
+    div.stButton > button::before {
+        content: '' !important;
+        position: absolute !important;
+        top: 0 !important;
+        left: -100% !important;
+        width: 50% !important;
+        height: 100% !important;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent) !important;
+        transform: skewX(-25deg) !important;
+        transition: all 0.6s ease !important;
+        z-index: -1 !important;
+    }
+
+    div.stButton > button:hover::before {
+        left: 150% !important;
+    }
+
+    /* 🟢 BOTÓN PRIMARIO: CONFIRMAR ENTREGA (Cyber-Neón Reactivo) */
+    div.stButton > button[kind="primary"] {
+        background: rgba(0, 255, 136, 0.05) !important;
+        color: #00ff88 !important;
+        border: 1px solid rgba(0, 255, 136, 0.3) !important;
+        box-shadow: 0 0 10px rgba(0, 255, 136, 0.1), inset 0 0 10px rgba(0, 255, 136, 0.05) !important;
+    }
+
+    div.stButton > button[kind="primary"]:hover {
+        background: rgba(0, 255, 136, 0.2) !important;
+        color: #ffffff !important;
+        border: 1px solid #00ff88 !important;
+        box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), inset 0 0 15px rgba(0, 255, 136, 0.3) !important;
+        transform: translateY(-4px) scale(1.02) !important;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+    }
+
+    div.stButton > button[kind="primary"]:active {
+        transform: translateY(1px) scale(0.98) !important;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
+    }
+
+    /* 🔵 BOTÓN SECUNDARIO: SINCRONIZAR DATOS (Holográfico Sutil) */
+    div.stButton > button[kind="secondary"] {
+        background: transparent !important;
+        color: #8b949e !important;
+        border: 1px dashed rgba(139, 148, 158, 0.4) !important;
+    }
+
+    div.stButton > button[kind="secondary"]:hover {
+        background: rgba(0, 240, 255, 0.05) !important;
+        color: #00f0ff !important;
+        border: 1px solid #00f0ff !important;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3) !important;
+        transform: translateY(-2px) !important;
+        text-shadow: 0 0 8px rgba(0, 240, 255, 0.5) !important;
+    }
+    
+    /* Estilización de las métricas superiores y textos */
     [data-testid="stMetricValue"] {
         color: #00f0ff !important;
         font-weight: 900 !important;
@@ -110,7 +163,6 @@ st.markdown("""
         font-size: 12px !important;
     }
     
-    /* Inputs y buscadores */
     .stTextInput > div > div > input {
         background-color: rgba(22, 27, 34, 0.6) !important;
         border: 1px solid #30363d !important;
@@ -254,14 +306,12 @@ else:
         if df_pendientes.empty:
             st.success("¡Felicidades! 🎉 Todas las entregas del día han sido completadas.")
         else:
-            # Añadimos un pequeño retraso en la animación (delay) según el índice para efecto cascada
             for index, fila in df_pendientes.iterrows():
                 id_v = fila['id_venta']
                 estado = fila['estado']
                 clase_badge = "badge-pendiente"
-                delay = (index % 10) * 0.1 # Efecto cascada
+                delay = (index % 10) * 0.1 
                 
-                # HTML mejorado para la tarjeta
                 card_html = f"""
                 <div class="delivery-card" style="animation-delay: {delay}s;">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -283,7 +333,8 @@ else:
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
                 
-                if st.button(f"CONFIRMAR ENTREGA", key=f"btn_{id_v}_{index}"):
+                # 🔥 NOTA EL type="primary" EN ESTE BOTÓN 🔥
+                if st.button(f"CONFIRMAR ENTREGA ✅", key=f"btn_{id_v}_{index}", type="primary"):
                     registrar_entrega_en_sheets(id_v)
                 
                 st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
@@ -292,6 +343,7 @@ else:
 # 7. BOTÓN MANUAL DE REFRESCAR
 # =============================================================================
 st.markdown("<div style='margin-top: 40px;'></div>", unsafe_allow_html=True)
-if st.button("🔄 SINCRONIZAR DATOS AHORA", key="btn_global_refresh"):
+# 🔥 NOTA EL type="secondary" EN ESTE BOTÓN 🔥
+if st.button("🔄 SINCRONIZAR DATOS AHORA", key="btn_global_refresh", type="secondary"):
     st.cache_data.clear()
     st.rerun()
