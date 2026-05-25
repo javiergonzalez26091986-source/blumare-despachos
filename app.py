@@ -5,173 +5,87 @@ import datetime
 import os
 
 # =============================================================================
-# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL (ÍCONO CORPORATIVO Y ANTI-INACTIVIDAD)
+# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL Y ANTI-INACTIVIDAD
 # =============================================================================
 icono_pestana = "logoBlumare.ico"
-
 if not os.path.exists(icono_pestana):
     icono_pestana = "logoBlumare.jpeg"
 
 st.set_page_config(
-    page_title="Blumare - Despachos",
+    page_title="Blumare Logistics",
     page_icon=icono_pestana if os.path.exists(icono_pestana) else "🚚",
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS ULTRA-PREMIUM y código JavaScript Keep-Alive
+# Inyección de estilos CSS - ESTILO ENTERPRISE/MINIMALISTA (SaaS Moderno)
 st.markdown("""
     <style>
+    /* Ocultar elementos nativos de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .stAppDeployButton {display:none;}
     div[data-testid="stToolbar"] { visibility: hidden !important; }
     
-    /* Fondo general oscuro de la App */
+    /* Fondo general - Slate 900 (Elegante y profundo) */
     .stApp {
-        background-color: #090c10;
-        background-image: radial-gradient(circle at 50% 0%, #161b22 0%, #090c10 70%);
+        background-color: #0f172a;
     }
 
-    /* Animación de entrada suave para las tarjetas */
-    @keyframes slideUpFade {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Tarjetas de entregas (Glassmorphism) */
-    .delivery-card {
-        background: linear-gradient(145deg, rgba(22, 27, 34, 0.7), rgba(13, 17, 23, 0.8));
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 20px;
-        padding: 22px;
-        margin-bottom: 5px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        animation: slideUpFade 0.6s ease-out both;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .delivery-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 240, 255, 0.08);
-        border: 1px solid rgba(0, 240, 255, 0.2);
-    }
-
-    /* Badges de estado */
-    .badge-pendiente {
-        background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(243, 156, 18, 0.2));
-        color: #f1c40f;
-        padding: 6px 14px;
-        border-radius: 30px;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        border: 1px solid rgba(241, 196, 15, 0.4);
-        box-shadow: 0 0 10px rgba(241, 196, 15, 0.1);
-    }
-
-    /* ===================================================================== */
-    /* 🔥 NUEVO DISEÑO ULTRA-PREMIUM PARA LOS BOTONES 🔥                     */
-    /* ===================================================================== */
-    
-    /* Base compartida para todos los botones */
-    div.stButton > button {
-        width: 100%;
-        border-radius: 12px !important;
-        padding: 14px 0px !important;
-        font-weight: 900 !important;
-        letter-spacing: 2px !important;
-        text-transform: uppercase !important;
-        font-size: 13px !important;
-        position: relative !important;
-        overflow: hidden !important;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        z-index: 1 !important;
-        backdrop-filter: blur(5px) !important;
-    }
-
-    /* Efecto de barrido de luz (Shine) al interactuar */
-    div.stButton > button::before {
-        content: '' !important;
-        position: absolute !important;
-        top: 0 !important;
-        left: -100% !important;
-        width: 50% !important;
-        height: 100% !important;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent) !important;
-        transform: skewX(-25deg) !important;
-        transition: all 0.6s ease !important;
-        z-index: -1 !important;
-    }
-
-    div.stButton > button:hover::before {
-        left: 150% !important;
-    }
-
-    /* 🟢 BOTÓN PRIMARIO: CONFIRMAR ENTREGA (Cyber-Neón Reactivo) */
-    div.stButton > button[kind="primary"] {
-        background: rgba(0, 255, 136, 0.05) !important;
-        color: #00ff88 !important;
-        border: 1px solid rgba(0, 255, 136, 0.3) !important;
-        box-shadow: 0 0 10px rgba(0, 255, 136, 0.1), inset 0 0 10px rgba(0, 255, 136, 0.05) !important;
-    }
-
-    div.stButton > button[kind="primary"]:hover {
-        background: rgba(0, 255, 136, 0.2) !important;
-        color: #ffffff !important;
-        border: 1px solid #00ff88 !important;
-        box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), inset 0 0 15px rgba(0, 255, 136, 0.3) !important;
-        transform: translateY(-4px) scale(1.02) !important;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
-    }
-
-    div.stButton > button[kind="primary"]:active {
-        transform: translateY(1px) scale(0.98) !important;
-        box-shadow: 0 0 15px rgba(0, 255, 136, 0.4) !important;
-    }
-
-    /* 🔵 BOTÓN SECUNDARIO: SINCRONIZAR DATOS (Holográfico Sutil) */
-    div.stButton > button[kind="secondary"] {
-        background: transparent !important;
-        color: #8b949e !important;
-        border: 1px dashed rgba(139, 148, 158, 0.4) !important;
-    }
-
-    div.stButton > button[kind="secondary"]:hover {
-        background: rgba(0, 240, 255, 0.05) !important;
-        color: #00f0ff !important;
-        border: 1px solid #00f0ff !important;
-        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3) !important;
-        transform: translateY(-2px) !important;
-        text-shadow: 0 0 8px rgba(0, 240, 255, 0.5) !important;
-    }
-    
-    /* Estilización de las métricas superiores y textos */
-    [data-testid="stMetricValue"] {
-        color: #00f0ff !important;
-        font-weight: 900 !important;
-        text-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-    }
-    [data-testid="stMetricLabel"] {
-        color: #8b949e !important;
-        font-weight: 700 !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 12px !important;
-    }
-    
+    /* Redefinir la caja de búsqueda */
     .stTextInput > div > div > input {
-        background-color: rgba(22, 27, 34, 0.6) !important;
-        border: 1px solid #30363d !important;
-        border-radius: 10px !important;
-        color: white !important;
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        font-size: 14px !important;
+        padding: 12px 15px !important;
     }
     .stTextInput > div > div > input:focus {
-        border-color: #00f0ff !important;
-        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 1px #3b82f6 !important;
+    }
+
+    /* Estilo Flat Moderno para los Botones */
+    div.stButton > button {
+        width: 100%;
+        border-radius: 8px !important;
+        padding: 12px 0px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        font-size: 15px !important;
+        border: none !important;
+        transition: background-color 0.2s ease, transform 0.1s ease !important;
+    }
+
+    /* Botón Principal (Confirmar Entrega - Verde Esmeralda Mate) */
+    div.stButton > button[kind="primary"] {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #059669 !important;
+    }
+    div.stButton > button[kind="primary"]:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* Botón Secundario (Sincronizar - Gris Pizarra) */
+    div.stButton > button[kind="secondary"] {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+        border: 1px solid #334155 !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        background-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    
+    /* Toast (Mensajes de éxito nativos) */
+    div[data-testid="stToast"] {
+        background-color: #1e293b !important;
+        border-left: 4px solid #10b981 !important;
     }
     </style>
     
@@ -181,7 +95,6 @@ st.markdown("""
             var iframe = document.getElementById('anti-idle-iframe');
             if (iframe) {
                 iframe.src = 'about:blank?keepalive=' + Date.now();
-                console.log("Blumare Keep-Alive: Conexión refrescada.");
             }
         }, 300000); 
     </script>
@@ -190,7 +103,7 @@ st.markdown("""
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
-# LOGO DE LA APP Y ENCABEZADO
+# 2. ENCABEZADO MINIMALISTA (LOGO + TÍTULO)
 # =============================================================================
 nombre_logo = "logoBlumare.jpeg"
 
@@ -201,24 +114,17 @@ if os.path.exists(nombre_logo):
     
     st.markdown(
         f"""
-        <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 10px;">
-            <img src="data:image/jpeg;base64,{encoded_string}" width="110" style="border-radius: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.4);">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; margin-bottom: 25px;">
+            <img src="data:image/jpeg;base64,{encoded_string}" width="60" style="border-radius: 12px; margin-bottom: 15px;">
+            <h1 style="color: #f8fafc; font-size: 20px; font-weight: 700; margin: 0; letter-spacing: 1px;">BLUMARE LOGISTICS</h1>
+            <p style="color: #64748b; font-size: 12px; font-weight: 500; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Control de Despachos</p>
         </div>
         """,
         unsafe_allow_html=True
     )
-else:
-    st.error(f"⚠️ Archivo del logo no detectado.")
-
-# Títulos con Gradiente Metálico Premium
-st.markdown("<h1 style='text-align: center; font-weight: 900; margin-bottom: 0; font-size: 32px; background: -webkit-linear-gradient(45deg, #ffffff, #00f0ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>BLUMARE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #8b949e; font-weight: 800; letter-spacing: 4px; margin-top: 0; font-size: 11px;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
-
-# Línea separadora difuminada
-st.markdown("<div style='height: 1px; background: linear-gradient(90deg, transparent, #30363d, transparent); margin: 25px 0;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
-# 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA REAL)
+# 3. LÓGICA DE DATOS
 # =============================================================================
 @st.cache_data(ttl=2)
 def descargar_datos_despacho():
@@ -226,12 +132,10 @@ def descargar_datos_despacho():
         url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos"
         respuesta = requests.get(url_con_parametros, timeout=10)
         resultado = respuesta.json()
-        
         if isinstance(resultado, list):
             return resultado
         return []
     except Exception as e:
-        st.error(f"Error de conexión con la central: {e}")
         return []
 
 def registrar_entrega_en_sheets(id_venta):
@@ -241,21 +145,20 @@ def registrar_entrega_en_sheets(id_venta):
         respuesta = requests.get(url_actualizar, timeout=10)
         
         if respuesta.status_code == 200:
-            st.toast(f"¡Pedido #{id_venta} marcado como Entregado! 🎉", icon="✅")
+            st.toast(f"Entrega confirmada: {id_venta}", icon="✅")
             st.cache_data.clear() 
             st.rerun()
         else:
-            st.error("La central recibió la orden pero no pudo actualizar la fila.")
+            st.error("Error al actualizar en servidor.")
     except Exception as e:
-        st.error(f"Error al comunicar la entrega: {e}")
+        st.error("Error de red.")
 
 datos_crudos = descargar_datos_despacho()
 
 if not datos_crudos:
-    st.warning("No se recibieron datos de la central o la lista de despachos está vacía.")
+    st.info("Sincronizando con la central...")
 else:
     df_base = pd.DataFrame(datos_crudos)
-    
     df = pd.DataFrame()
     df['id_venta'] = df_base[0].astype(str).str.strip()
     df['fecha'] = df_base[1].astype(str)
@@ -269,26 +172,32 @@ else:
     df = df[df['id_venta'] != ''].copy()
 
     if df.empty:
-        st.info("No hay registros activos de despacho en este momento.")
+        st.success("No hay datos históricos activos.")
     else:
         # =============================================================================
-        # 4. METRICAS CLAVE EN TIEMPO REAL
+        # 4. DASHBOARD DE MÉTRICAS (HTML/CSS Personalizado en lugar de st.metric)
         # =============================================================================
         pendientes = len(df[df['estado'].str.lower() != 'entregado'])
         total_kgs = df['cantidad_kgs'].sum()
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric(label="Envíos Pendientes", value=pendientes)
-        with col2:
-            st.metric(label="Total Kilos Ruta", value=f"{total_kgs:,.1f} KG")
-
-        st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
+        html_dashboard = f"""
+        <div style="display: flex; gap: 12px; margin-bottom: 25px;">
+            <div style="flex: 1; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px;">
+                <div style="color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Envíos Pendientes</div>
+                <div style="color: #f8fafc; font-size: 26px; font-weight: 700;">{pendientes}</div>
+            </div>
+            <div style="flex: 1; background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px;">
+                <div style="color: #94a3b8; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;">Total Kilos (Ruta)</div>
+                <div style="color: #f8fafc; font-size: 26px; font-weight: 700;">{total_kgs:,.1f} <span style="font-size: 14px; color: #64748b;">KG</span></div>
+            </div>
+        </div>
+        """
+        st.markdown(html_dashboard, unsafe_allow_html=True)
 
         # =============================================================================
         # 5. BUSCADOR INTERACTIVO
         # =============================================================================
-        busqueda = st.text_input("🔍 Buscar por Cliente o Producto:", placeholder="Escribe para filtrar la ruta...")
+        busqueda = st.text_input("Buscar", placeholder="🔍 Buscar por cliente o producto...", label_visibility="collapsed")
 
         if busqueda:
             df = df[
@@ -297,53 +206,65 @@ else:
             ]
 
         # =============================================================================
-        # 6. HOJA DE RUTA EN TIEMPO REAL
+        # 6. TARJETAS DE RUTA ESTILO TICKET CORPORATIVO
         # =============================================================================
-        st.markdown("<h3 style='color: #8b949e; font-size: 12px; font-weight: bold; letter-spacing: 2px; margin-top: 20px; margin-bottom: 15px;'>📍 HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
         
         df_pendientes = df[df['estado'].str.lower() != 'entregado']
 
         if df_pendientes.empty:
-            st.success("¡Felicidades! 🎉 Todas las entregas del día han sido completadas.")
+            st.markdown(
+                """
+                <div style="background-color: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 20px; text-align: center; margin-top: 20px;">
+                    <h3 style="color: #10b981; font-size: 18px; margin: 0 0 5px 0;">¡Ruta Completada! 🎉</h3>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0;">Todas las entregas del día han sido procesadas.</p>
+                </div>
+                """, unsafe_allow_html=True)
         else:
             for index, fila in df_pendientes.iterrows():
                 id_v = fila['id_venta']
-                estado = fila['estado']
-                clase_badge = "badge-pendiente"
-                delay = (index % 10) * 0.1 
                 
-                card_html = f"""
-                <div class="delivery-card" style="animation-delay: {delay}s;">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                # Diseño de Ticket Profesional
+                ticket_html = f"""
+                <div style="background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 8px;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="color: #64748b; font-size: 12px; font-weight: 600; font-family: monospace;">{id_v}</span>
+                        <span style="background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase;">Pendiente</span>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div style="color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Cliente / Destino</div>
+                        <div style="color: #f8fafc; font-size: 18px; font-weight: 600; line-height: 1.3;">{fila['cliente']}</div>
+                        <div style="color: #cbd5e1; font-size: 13px; margin-top: 4px;">📍 {fila['direccion']}</div>
+                    </div>
+                    
+                    <div style="background-color: #0f172a; border-radius: 8px; padding: 12px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span style="font-family: 'Courier New', Courier, monospace; color: #58a6ff; font-size: 11px; font-weight: bold; background: rgba(88, 166, 255, 0.1); padding: 3px 8px; border-radius: 6px;">#{id_v}</span>
-                            <h4 style="color: white; margin: 8px 0 0 0; font-size: 19px; font-weight: 800; letter-spacing: -0.5px;">{fila['cliente']}</h4>
+                            <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">PRODUCTO</div>
+                            <div style="color: #e2e8f0; font-size: 14px; font-weight: 500;">📦 {fila['producto']}</div>
                         </div>
-                        <span class="{clase_badge}">{estado.upper()}</span>
+                        <div style="text-align: right;">
+                            <div style="color: #64748b; font-size: 11px; margin-bottom: 2px;">CANTIDAD</div>
+                            <div style="color: #3b82f6; font-size: 16px; font-weight: 700;">{fila['cantidad_kgs']} KG</div>
+                        </div>
                     </div>
-                    <div style="margin-top: 18px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px; font-size: 14px;">
-                        <p style="margin: 0 0 8px 0; color: #c9d1d9;">📦 <span style="color: #8b949e; font-size: 12px; text-transform: uppercase;">Producto:</span> <br><b>{fila['producto']}</b> — <span style="color: #00f0ff; font-weight: 900; font-size: 16px; text-shadow: 0 0 8px rgba(0,240,255,0.4);">{fila['cantidad_kgs']} KGS</span></p>
-                        <p style="margin: 0; color: #c9d1d9;">📍 <span style="color: #8b949e; font-size: 12px; text-transform: uppercase;">Destino:</span> <br><b>{fila['direccion']}</b></p>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 11px; color: #8b949e; font-weight: 600; margin-bottom: 10px;">
-                        <span>🏢 Repartidor: <span style="color: #c9d1d9;">{fila['repartidor']}</span></span>
-                        <span>📅 <span style="color: #c9d1d9;">{fila['fecha']}</span></span>
-                    </div>
+                    
                 </div>
                 """
-                st.markdown(card_html, unsafe_allow_html=True)
+                st.markdown(ticket_html, unsafe_allow_html=True)
                 
-                # 🔥 NOTA EL type="primary" EN ESTE BOTÓN 🔥
-                if st.button(f"CONFIRMAR ENTREGA ✅", key=f"btn_{id_v}_{index}", type="primary"):
+                # Botón Integrado por código de Python (Streamlit button)
+                # Al ponerlo justo debajo sin margen extra, simula ser parte de la tarjeta
+                if st.button("Confirmar Entrega", key=f"btn_{id_v}_{index}", type="primary"):
                     registrar_entrega_en_sheets(id_v)
                 
-                st.markdown("<div style='margin-bottom: 30px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
 
 # =============================================================================
 # 7. BOTÓN MANUAL DE REFRESCAR
 # =============================================================================
-st.markdown("<div style='margin-top: 40px;'></div>", unsafe_allow_html=True)
-# 🔥 NOTA EL type="secondary" EN ESTE BOTÓN 🔥
-if st.button("🔄 SINCRONIZAR DATOS AHORA", key="btn_global_refresh", type="secondary"):
+st.markdown("<div style='margin-top: 30px; margin-bottom: 10px; border-top: 1px solid #334155; padding-top: 20px;'></div>", unsafe_allow_html=True)
+if st.button("Actualizar Sistema", key="btn_global_refresh", type="secondary"):
     st.cache_data.clear()
     st.rerun()
