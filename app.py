@@ -138,32 +138,43 @@ def descargar_datos_despacho():
         return []
 
 def registrar_entrega_en_sheets(id_venta, foto_bytes):
-    # 1. Subir la imagen a Cloudinary
+    # 1. Intentar la subida a los servidores de almacenamiento de imágenes
     archivos = {"file": foto_bytes}
     parametros = {"upload_preset": CLOUDINARY_PRESET}
     
-    res_cloud = requests.post(CLOUDINARY_URL, files=archivos, data=parametros, timeout=15)
-    
-    if res_cloud.status_code == 200:
-        link_foto = res_cloud.json().get("secure_url", "")
-        # 2. Registrar el éxito y la URL en Google Sheets
-        ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        url_actualizar = (
-            f"{URL_API}?tipo_operacion=ActualizarEstado"
-            f"&id_venta={id_venta}"
-            f"&nuevo_estado=Entregado"
-            f"&hora_entrega={ahora}"
-            f"&soporte_entrega={link_foto}"
-        )
-        respuesta = requests.get(url_actualizar, timeout=10)
-        if respuesta.status_code == 200:
-            st.toast(f"¡Pedido #{id_venta} marcado como Entregado!", icon="✅")
-            st.cache_data.clear() 
-            st.rerun()
+    try:
+        res_cloud = requests.post(CLOUDINARY_URL, files=archivos, data=parametros, timeout=15)
+        
+        if res_cloud.status_code == 200:
+            link_foto = res_cloud.json().get("secure_url", "")
+            
+            # 2. Registrar el éxito y la URL en Google Sheets
+            ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            url_actualizar = (
+                f"{URL_API}?tipo_operacion=ActualizarEstado"
+                f"&id_venta={id_venta}"
+                f"&nuevo_estado=Entregado"
+                f"&hora_entrega={ahora}"
+                f"&soporte_entrega={link_foto}"
+            )
+            respuesta = requests.get(url_actualizar, timeout=10)
+            if respuesta.status_code == 200:
+                st.toast(f"¡Pedido #{id_venta} marcado como Entregado!", icon="✅")
+                st.cache_data.clear() 
+                st.rerun()
+            else:
+                st.error("La central recibió la imagen, pero no pudo actualizar el archivo maestro.")
         else:
-            st.error("La central recibió la imagen, pero no pudo actualizar el Excel.")
-    else:
-        st.error("Error crítico de Cloudinary. No se pudo subir el documento.")
+            # DIAGNÓSTICO EN TIEMPO REAL: Extrae la razón exacta devuelta por el servidor
+            try:
+                mensaje_servidor = res_cloud.json().get("error", {}).get("message", res_cloud.text)
+            except:
+                mensaje_servidor = res_cloud.text
+            st.error(f"❌ Error de Cloudinary: {mensaje_servidor}")
+            st.info("💡 Consejo: Comprueba que el Upload Preset sea 'Unsigned' en tu panel de Cloudinary.")
+            
+    except Exception as ex:
+        st.error(f"⚠️ Fallo de conexión de red al intentar subir el soporte: {str(ex)}")
 
 # =============================================================================
 # LÓGICA DE INTERFAZ: PANTALLA DE INICIO DE SESIÓN VS. PANEL DE REPARTOS
@@ -246,7 +257,7 @@ else:
                 for index, fila in df_pendientes.iterrows():
                     id_v = fila['id_venta']
                     
-                    # Llave dinámica para controlar si la cámara de este pedido está abierta o cerrada
+                    # Llave dinámica para controlar la visibilidad del paso de captura de foto
                     estado_camara = f"mostrar_camara_{id_v}_{index}"
                     if estado_camara not in st.session_state:
                         st.session_state[estado_camara] = False
@@ -268,14 +279,12 @@ else:
                     """
                     st.markdown(card_html, unsafe_allow_html=True)
                     
-                    # Lógica de mostrar/ocultar cámara
+                    # Flujo de despliegue dinámico por pasos
                     if not st.session_state[estado_camara]:
-                        # Botón inicial para abrir la cámara
                         if st.button(f"✅ Confirmar Entrega", key=f"abrir_cam_{id_v}_{index}"):
                             st.session_state[estado_camara] = True
                             st.rerun()
                     else:
-                        # Se muestra la cámara y los controles finales
                         st.info("Capture el documento firmado antes de confirmar.")
                         foto_evidencia = st.camera_input(f"📷 Soporte {id_v}", key=f"cam_{id_v}_{index}", label_visibility="collapsed")
                         
@@ -292,7 +301,6 @@ else:
                                 else:
                                     with st.spinner("Subiendo evidencia..."):
                                         registrar_entrega_en_sheets(id_v, foto_evidencia.getvalue())
-                                        # Si es exitoso, cerramos el menú de cámara para limpieza
                                         st.session_state[estado_camara] = False
                     
                     st.markdown("<hr style='border-color: #30363d; margin: 25px 0px;'>", unsafe_allow_html=True)
