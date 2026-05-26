@@ -189,7 +189,8 @@ else:
     with col_info:
         st.markdown(f"🟢 Conductor Activo: **{st.session_state.placa_autenticada}**")
     with col_logout:
-        if st.button("🚪 Salir", kind="secondary"):
+        # Aquí estaba el error (kind="secondary"). Cambiado a type="secondary".
+        if st.button("🚪 Salir", type="secondary"):
             st.session_state.placa_autenticada = None
             st.rerun()
             
@@ -278,6 +279,7 @@ else:
                     
                     st.markdown("<hr style='border-color: #30363d; margin: 25px 0px;'>", unsafe_allow_html=True)
 
-    if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh", kind="secondary"):
+    # También corregimos este botón
+    if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh", type="secondary"):
         st.cache_data.clear()
         st.rerun()
