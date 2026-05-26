@@ -21,64 +21,89 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
+# Inyección de estilos CSS - ESTILO ENTERPRISE/MINIMALISTA Y OCULTAMIENTO TOTAL
 st.markdown("""
     <style>
-    /* 1. OCULTAR ELEMENTOS DE STREAMLIT CLOUD (FOTO DE PERFIL, MENÚS, HEADER) */
+    /* ===================================================================== */
+    /* 1. OCULTAR ELEMENTOS NATIVOS DE STREAMLIT Y BARRA SUPERIOR            */
+    /* ===================================================================== */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     .stAppDeployButton { display: none !important; }
     #MainMenu { display: none !important; }
     footer { display: none !important; }
-    
-    /* Fondo general oscuro */
+
+    /* ===================================================================== */
+    /* 🔥 2. LA MAGIA PARA OCULTAR TU FOTO DE PERFIL (CREATOR BADGE) 🔥      */
+    /* ===================================================================== */
+    .viewerBadge_container { display: none !important; }
+    .viewerBadge_link { display: none !important; }
+    #viewerBadge { display: none !important; }
+    #creatorBadge { display: none !important; }
+    [data-testid="stAppCreatorBadge"] { display: none !important; }
+    [data-testid="stCreatorProfile"] { display: none !important; }
+    [data-testid="viewerBadge"] { display: none !important; }
+
+    /* ===================================================================== */
+    /* 3. ESTILOS VISUALES DEL DASHBOARD (Slate 900)                         */
+    /* ===================================================================== */
     .stApp {
-        background-color: #0d1117;
+        background-color: #0f172a;
     }
-    
-    /* Tarjetas de entregas (Glassmorphism) */
-    .delivery-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+
+    /* Redefinir la caja de búsqueda */
+    .stTextInput > div > div > input {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        font-size: 14px !important;
+        padding: 12px 15px !important;
     }
-    
-    /* Badges de estado */
-    .badge-pendiente {
-        background-color: rgba(241, 196, 15, 0.15);
-        color: #f1c40f;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(241, 196, 15, 0.3);
+    .stTextInput > div > div > input:focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 1px #3b82f6 !important;
     }
-    .badge-entregado {
-        background-color: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(46, 204, 113, 0.3);
-    }
-    
-    /* Ajuste para los botones de entrega */
+
+    /* Estilo Flat Moderno para los Botones */
     div.stButton > button {
         width: 100%;
-        background-color: #238636 !important;
-        color: white !important;
-        border: 1px solid #30853e !important;
         border-radius: 8px !important;
-        padding: 6px 0px !important;
-        font-weight: bold !important;
+        padding: 12px 0px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        font-size: 15px !important;
+        border: none !important;
+        transition: background-color 0.2s ease, transform 0.1s ease !important;
     }
-    div.stButton > button:hover {
-        background-color: #2ea043 !important;
-        border-color: #3fb950 !important;
+
+    /* Botón Principal (Confirmar Entrega - Verde Esmeralda Mate) */
+    div.stButton > button[kind="primary"] {
+        background-color: #10b981 !important;
+        color: #ffffff !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #059669 !important;
+    }
+    div.stButton > button[kind="primary"]:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* Botón Secundario (Sincronizar - Gris Pizarra) */
+    div.stButton > button[kind="secondary"] {
+        background-color: #1e293b !important;
+        color: #94a3b8 !important;
+        border: 1px solid #334155 !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        background-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+    
+    /* Toast (Mensajes de éxito nativos) */
+    div[data-testid="stToast"] {
+        background-color: #1e293b !important;
+        border-left: 4px solid #10b981 !important;
     }
     </style>
     
@@ -88,11 +113,11 @@ st.markdown("""
             var iframe = document.getElementById('anti-idle-iframe');
             if (iframe) {
                 iframe.src = 'about:blank?keepalive=' + Date.now();
-                console.log("Blumare Keep-Alive: Conexión refrescada.");
             }
         }, 300000); 
     </script>
     """, unsafe_allow_html=True)
+
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
