@@ -24,34 +24,18 @@ st.set_page_config(
 # Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stAppDeployButton {display:none;}
-    div[data-testid="stToolbar"] { visibility: hidden !important; }
+    /* 1. OCULTAR ELEMENTOS DE STREAMLIT CLOUD (FOTO DE PERFIL, MENÚS, HEADER) */
+    [data-testid="stHeader"] { display: none !important; }
+    [data-testid="stToolbar"] { display: none !important; }
+    .stAppDeployButton { display: none !important; }
+    #MainMenu { display: none !important; }
+    footer { display: none !important; }
     
-    div.stButton > button:first-child[kind="primary"] {
-        background-color: #28a745 !important;
-        border-color: #28a745 !important;
-        color: white !important;
+    /* Fondo general oscuro */
+    .stApp {
+        background-color: #0d1117;
     }
-    .stColumn div.stButton > button[kind="primary"] {
-        background-color: #dc3545 !important;
-        border-color: #dc3545 !important;
-        color: white !important;
-    }
-
-    <style>
-    /* Ocultar el menú antiguo y el pie de página */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
     
-    /* Ocultar barra superior y el botón rebelde de Manage App */
-    [data-testid="stAppHeader"] {display: none !important;}
-    div[data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
-    footer {visibility: hidden;}
-    
-    }
     /* Tarjetas de entregas (Glassmorphism) */
     .delivery-card {
         background-color: #161b22;
@@ -61,6 +45,7 @@ st.markdown("""
         margin-bottom: 5px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
+    
     /* Badges de estado */
     .badge-pendiente {
         background-color: rgba(241, 196, 15, 0.15);
@@ -80,6 +65,7 @@ st.markdown("""
         font-weight: bold;
         border: 1px solid rgba(46, 204, 113, 0.3);
     }
+    
     /* Ajuste para los botones de entrega */
     div.stButton > button {
         width: 100%;
@@ -98,8 +84,6 @@ st.markdown("""
     
     <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
     <script>
-        // Esta función realiza una micro-interacción interna cada 5 minutos (300000 ms)
-        // simulando actividad constante para que Streamlit Cloud no duerma la sesión.
         setInterval(function() {
             var iframe = document.getElementById('anti-idle-iframe');
             if (iframe) {
@@ -109,7 +93,6 @@ st.markdown("""
         }, 300000); 
     </script>
     """, unsafe_allow_html=True)
-
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
