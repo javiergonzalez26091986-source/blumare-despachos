@@ -89,7 +89,7 @@ st.markdown("""
 
 # Constantes API
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
-CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddouzzzs1i/image/upload"
+CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddouzzs1i/image/upload"
 CLOUDINARY_PRESET = "bluemare_preset"
 
 # Estado de autenticación local
