@@ -105,20 +105,7 @@ st.markdown("""
     </script>
     """, unsafe_allow_html=True)
 
-/* Bloqueo por posición absoluta (Lo sacamos de la pantalla) */
-[data-testid="stAppCreatorBadge"], 
-.viewerBadge_container,
-#viewerBadge {
-    position: fixed !important;
-    bottom: -100px !important;
-    right: -100px !important;
-    width: 0 !important;
-    height: 0 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-}
-
-# URL exacta de tu API de Google Apps Script
+# URL exacta API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
