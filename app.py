@@ -21,62 +21,76 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS - ESTILO ENTERPRISE/MINIMALISTA Y BLOQUEO DE FOTO DE PERFIL
+# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
 st.markdown("""
     <style>
-    /* 1. OCULTAR ELEMENTOS NATIVOS DE STREAMLIT */
+    /* 1. OCULTAR ELEMENTOS DE STREAMLIT CLOUD (FOTO DE PERFIL, MENÚS, HEADER) */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     .stAppDeployButton { display: none !important; }
     #MainMenu { display: none !important; }
     footer { display: none !important; }
     
-    /* BLOQUEO DE SEGURIDAD PARA OCULTAR EL BADGE DE PERFIL */
-    div[class*="viewerBadge"], 
-    [data-testid="stAppCreatorBadge"], 
-    [data-testid="stCreatorProfile"] { 
-        display: none !important; 
+  
+    
+    /* Tarjetas de entregas (Glassmorphism) */
+    .delivery-card {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 5px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     }
     
-    /* CAPA DE COBERTURA DE SEGURIDAD */
-    div[class*="viewerBadge"]::before {
-        content: "" !important;
-        position: fixed !important;
-        bottom: 0 !important;
-        right: 0 !important;
-        width: 200px !important;
-        height: 100px !important;
-        background-color: #0f172a !important; 
-        z-index: 999999 !important;
+    /* Badges de estado */
+    .badge-pendiente {
+        background-color: rgba(241, 196, 15, 0.15);
+        color: #f1c40f;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid rgba(241, 196, 15, 0.3);
     }
-
-    /* ESTILOS VISUALES DEL DASHBOARD (Slate 900) */
-    .stApp { background-color: #0f172a; }
-
-    /* Redefinir la caja de búsqueda */
-    .stTextInput > div > div > input {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-        color: #f8fafc !important;
-        font-size: 14px !important;
-        padding: 12px 15px !important;
+    .badge-entregado {
+        background-color: rgba(46, 204, 113, 0.15);
+        color: #2ecc71;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid rgba(46, 204, 113, 0.3);
     }
     
-    /* Estilo Flat Moderno para los Botones */
+    /* Ajuste para los botones de entrega */
     div.stButton > button {
         width: 100%;
+        background-color: #238636 !important;
+        color: white !important;
+        border: 1px solid #30853e !important;
         border-radius: 8px !important;
-        padding: 12px 0px !important;
-        font-weight: 600 !important;
-        border: none !important;
+        padding: 6px 0px !important;
+        font-weight: bold !important;
     }
-    div.stButton > button[kind="primary"] { background-color: #10b981 !important; color: #ffffff !important; }
-    div.stButton > button[kind="secondary"] { background-color: #1e293b !important; color: #94a3b8 !important; border: 1px solid #334155 !important; }
+    div.stButton > button:hover {
+        background-color: #2ea043 !important;
+        border-color: #3fb950 !important;
+    }
     </style>
+    
+    <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
+    <script>
+        setInterval(function() {
+            var iframe = document.getElementById('anti-idle-iframe');
+            if (iframe) {
+                iframe.src = 'about:blank?keepalive=' + Date.now();
+                console.log("Blumare Keep-Alive: Conexión refrescada.");
+            }
+        }, 300000); 
+    </script>
     """, unsafe_allow_html=True)
-
-# URL exacta API de Google Apps Script
+# URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
 # =============================================================================
