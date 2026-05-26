@@ -146,7 +146,7 @@ def registrar_entrega_en_sheets(id_venta):
         respuesta = requests.get(url_actualizar, timeout=10)
         
         if respuesta.status_code == 200:
-            st.toast(f"¡Pedido #{id_venta} marcado como Entregado! 🎉", icon="✅")
+            st.toast(f"¡Pedido #{id_venta} marcado como Entregado!", icon="✅")
             st.cache_data.clear() # Limpia el caché inmediatamente para forzar la recarga
             st.rerun()
         else:
