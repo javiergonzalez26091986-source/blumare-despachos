@@ -195,7 +195,7 @@ else:
     # --- PANEL DE REPARTOS Y RUTAS ---
     col_info, col_logout = st.columns([7, 3])
     with col_info:
-        st.markdown(f"<span style='color:#3fb950;'>●</span> Conductor Activo: **{st.session_state.placa_autenticada}**", unsafe_allow_html=True)
+        st.markdown(f"<span style='color:#3fb950;'>●</span> Vehículo Activo: **{st.session_state.placa_autenticada}**", unsafe_allow_html=True)
     with col_logout:
         # Icono corporativo de salida
         if st.button("Cerrar Sesión", type="secondary", icon=":material/logout:"):
