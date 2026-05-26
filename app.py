@@ -31,10 +31,7 @@ st.markdown("""
     #MainMenu { display: none !important; }
     footer { display: none !important; }
     
-    /* Fondo general oscuro */
-    .stApp {
-        background-color: #0d1117;
-    }
+  
     
     /* Tarjetas de entregas (Glassmorphism) */
     .delivery-card {
