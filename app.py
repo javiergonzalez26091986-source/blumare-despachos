@@ -21,7 +21,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS y código JavaScript Keep-Alive + Eliminador de Badge
+# Inyección de estilos CSS - ESTILO ENTERPRISE/MINIMALISTA Y BLOQUEO DE FOTO DE PERFIL
 st.markdown("""
     <style>
     /* 1. OCULTAR ELEMENTOS NATIVOS DE STREAMLIT */
@@ -31,91 +31,50 @@ st.markdown("""
     #MainMenu { display: none !important; }
     footer { display: none !important; }
     
-    /* 2. OCULTAR EL BADGE DE CREADOR (FOTO DE PERFIL) */
-    div[class*="viewerBadge"] { display: none !important; }
-    [data-testid="stAppCreatorBadge"] { display: none !important; }
-    [data-testid="stCreatorProfile"] { display: none !important; }
-    
-    /* Tarjetas de entregas (Glassmorphism) */
-    .delivery-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    /* BLOQUEO DE SEGURIDAD PARA OCULTAR EL BADGE DE PERFIL */
+    div[class*="viewerBadge"], 
+    [data-testid="stAppCreatorBadge"], 
+    [data-testid="stCreatorProfile"] { 
+        display: none !important; 
     }
     
-    /* Badges de estado */
-    .badge-pendiente {
-        background-color: rgba(241, 196, 15, 0.15);
-        color: #f1c40f;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(241, 196, 15, 0.3);
+    /* CAPA DE COBERTURA DE SEGURIDAD */
+    div[class*="viewerBadge"]::before {
+        content: "" !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        width: 200px !important;
+        height: 100px !important;
+        background-color: #0f172a !important; 
+        z-index: 999999 !important;
     }
-    .badge-entregado {
-        background-color: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(46, 204, 113, 0.3);
+
+    /* ESTILOS VISUALES DEL DASHBOARD (Slate 900) */
+    .stApp { background-color: #0f172a; }
+
+    /* Redefinir la caja de búsqueda */
+    .stTextInput > div > div > input {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+        font-size: 14px !important;
+        padding: 12px 15px !important;
     }
     
-    /* Ajuste para los botones de entrega */
+    /* Estilo Flat Moderno para los Botones */
     div.stButton > button {
         width: 100%;
-        background-color: #238636 !important;
-        color: white !important;
-        border: 1px solid #30853e !important;
         border-radius: 8px !important;
-        padding: 6px 0px !important;
-        font-weight: bold !important;
+        padding: 12px 0px !important;
+        font-weight: 600 !important;
+        border: none !important;
     }
-    div.stButton > button:hover {
-        background-color: #2ea043 !important;
-        border-color: #3fb950 !important;
-    }
+    div.stButton > button[kind="primary"] { background-color: #10b981 !important; color: #ffffff !important; }
+    div.stButton > button[kind="secondary"] { background-color: #1e293b !important; color: #94a3b8 !important; border: 1px solid #334155 !important; }
     </style>
-    
-    <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
-    <script>
-        // 1. Mantener la app activa
-        setInterval(function() {
-            var iframe = document.getElementById('anti-idle-iframe');
-            if (iframe) {
-                iframe.src = 'about:blank?keepalive=' + Date.now();
-            }
-        }, 300000); 
-
-        // 2. Destruir el Badge de perfil
-        function killBadge() {
-            var elements = document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stAppCreatorBadge"], [data-testid="stCreatorProfile"]');
-            elements.forEach(function(el) {
-                el.style.display = 'none';
-                el.remove();
-            });
-        }
-        setInterval(killBadge, 1000);
-        window.addEventListener('load', killBadge);
-    </script>
     """, unsafe_allow_html=True)
-
-/* ¡Capa de cobertura de seguridad! */
-div[class*="viewerBadge"]::before {
-    content: "" !important;
-    position: fixed !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    width: 200px !important;
-    height: 100px !important;
-    background-color: #0f172a !important; /* Mismo color del fondo de tu app */
-    z-index: 999999 !important;
-}
 
 # URL exacta API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
