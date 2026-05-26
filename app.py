@@ -137,8 +137,8 @@ else:
 # =============================================================================
 # 2. ENCABEZADO DE LA APP
 # =============================================================================
-st.markdown("<h1 style='text-align: center; color: #0d1117; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #0d1117; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #898989; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #898989; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # =============================================================================
