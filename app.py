@@ -21,17 +21,20 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
+# Inyección de estilos CSS y código JavaScript Keep-Alive + Eliminador de Badge
 st.markdown("""
     <style>
-    /* 1. OCULTAR ELEMENTOS DE STREAMLIT CLOUD (FOTO DE PERFIL, MENÚS, HEADER) */
+    /* 1. OCULTAR ELEMENTOS NATIVOS DE STREAMLIT */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     .stAppDeployButton { display: none !important; }
     #MainMenu { display: none !important; }
     footer { display: none !important; }
     
-  
+    /* 2. OCULTAR EL BADGE DE CREADOR (FOTO DE PERFIL) */
+    div[class*="viewerBadge"] { display: none !important; }
+    [data-testid="stAppCreatorBadge"] { display: none !important; }
+    [data-testid="stCreatorProfile"] { display: none !important; }
     
     /* Tarjetas de entregas (Glassmorphism) */
     .delivery-card {
@@ -81,15 +84,27 @@ st.markdown("""
     
     <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
     <script>
+        // 1. Mantener la app activa
         setInterval(function() {
             var iframe = document.getElementById('anti-idle-iframe');
             if (iframe) {
                 iframe.src = 'about:blank?keepalive=' + Date.now();
-                console.log("Blumare Keep-Alive: Conexión refrescada.");
             }
         }, 300000); 
+
+        // 2. Destruir el Badge de perfil
+        function killBadge() {
+            var elements = document.querySelectorAll('div[class*="viewerBadge"], [data-testid="stAppCreatorBadge"], [data-testid="stCreatorProfile"]');
+            elements.forEach(function(el) {
+                el.style.display = 'none';
+                el.remove();
+            });
+        }
+        setInterval(killBadge, 1000);
+        window.addEventListener('load', killBadge);
     </script>
     """, unsafe_allow_html=True)
+
 # URL exacta de tu API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
