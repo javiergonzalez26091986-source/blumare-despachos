@@ -40,6 +40,16 @@ st.markdown("""
         border-color: #dc3545 !important;
         color: white !important;
     }
+
+    <style>
+    /* Ocultar el menú antiguo y el pie de página */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Ocultar barra superior y el botón rebelde de Manage App */
+    [data-testid="stAppHeader"] {display: none !important;}
+    div[data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    footer {visibility: hidden;}
     
     /* Fondo general oscuro */
     .stApp {
