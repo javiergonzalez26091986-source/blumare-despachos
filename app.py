@@ -22,13 +22,42 @@ st.set_page_config(
 )
 
 # Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
+# --- ESTILOS CSS ---
 st.markdown("""
     <style>
+    /* Ocultar el menú antiguo y el pie de página */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stAppDeployButton {display:none;}
-    div[data-testid="stToolbar"] { visibility: hidden !important; }
+    
+    /* Ocultar barra superior y el botón rebelde de Manage App */
+    [data-testid="stAppHeader"] {display: none !important;}
+    div[data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    footer {visibility: hidden;}
+    
+    /* Forzar la desaparición de los botones de despliegue/administración */
+    .stAppDeployButton {display: none !important;}
+    [data-testid="stAppHeader"] > div:first-child {display: none !important;}
+    
+    /* Si estás viéndolo tú como administrador, esto oculta el bloque superior izquierdo */
+    header {display: none !important;}
+    iframe[title="streamlitApp"] {margin-top: -50px;}
+    
+    /* Ajustar el margen superior para que no quede un hueco vacío tras borrar la barra */
+    .block-container {padding-top: 2rem !important;}
+    
+    /* Estilos de tus botones */
+    div.stButton > button:first-child[kind="primary"] {
+        background-color: #28a745 !important;
+        border-color: #28a745 !important;
+        color: white !important;
+    }
+    .stColumn div.stButton > button[kind="primary"] {
+        background-color: #dc3545 !important;
+        border-color: #dc3545 !important;
+        color: white !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
     div.stButton > button:first-child[kind="primary"] {
         background-color: #28a745 !important;
