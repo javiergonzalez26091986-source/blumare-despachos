@@ -24,11 +24,22 @@ st.set_page_config(
 # Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
 st.markdown("""
     <style>
+    /* --- CONFIGURACIÓN PARA OCULTAR LA BARRA SUPERIOR Y MANAGE APP --- */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stAppDeployButton {display:none;}
-    div[data-testid="stToolbar"] { visibility: hidden !important; }
+    header {display: none !important; visibility: hidden !important;}
+    
+    [data-testid="stAppHeader"] {display: none !important;}
+    [data-testid="stAppHeader"] > div:first-child {display: none !important;}
+    div[data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
+    div[data-testid="stStatusWidget"] {visibility: hidden;}
+    .stAppDeployButton {display:none !important;}
+    iframe[title="streamlitApp"] {margin-top: -50px;}
+    
+    /* Margen superior limpio tras borrar la cabecera */
+    .block-container {padding-top: 2rem !important;}
+    
+    /* ----------------------------------------------------------- */
     
     div.stButton > button:first-child[kind="primary"] {
         background-color: #28a745 !important;
