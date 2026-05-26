@@ -1,255 +1,195 @@
 import streamlit as st
-import requests
 import pandas as pd
-import datetime
+import requests
+from datetime import datetime
 import os
+import base64
 
-# =============================================================================
-# 1. CONFIGURACIÓN DE LA PÁGINA MÓVIL (ÍCONO CORPORATIVO Y ANTI-INACTIVIDAD)
-# =============================================================================
-# Nombre del archivo para el ícono de la pestaña (Favicon)
-icono_pestana = "logoBlumare.ico"
+# ==============================================================================
+# 1. CONFIGURACIÓN DE LA PÁGINA Y ESTILO INDUSTRIAL COMPACTO (MÓVIL)
+# ==============================================================================
+icono_pestana = "logoBlumare.ico" if os.path.exists("logoBlumare.ico") else "logoBlumare.jpeg"
+st.set_page_config(page_title="Blumare - Repartos", page_icon=icono_pestana, layout="centered")
 
-# Si por alguna razón no encuentra el .ico, usamos el .jpeg como respaldo
-if not os.path.exists(icono_pestana):
-    icono_pestana = "logoBlumare.jpeg"
-
-st.set_page_config(
-    page_title="Blumare - Despachos",
-    page_icon=icono_pestana if os.path.exists(icono_pestana) else "🚚",
-    layout="centered",
-    initial_sidebar_state="collapsed"
-)
-
-# Inyección de estilos CSS y código JavaScript Keep-Alive para evitar que la app se duerma
 st.markdown("""
     <style>
-    /* 1. OCULTAR ELEMENTOS DE STREAMLIT CLOUD (FOTO DE PERFIL, MENÚS, HEADER) */
     [data-testid="stHeader"] { display: none !important; }
     [data-testid="stToolbar"] { display: none !important; }
     .stAppDeployButton { display: none !important; }
-    #MainMenu { display: none !important; }
     footer { display: none !important; }
     
-  
-    
-    /* Tarjetas de entregas (Glassmorphism) */
-    .delivery-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 16px;
-        padding: 20px;
-        margin-bottom: 5px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Badges de estado */
-    .badge-pendiente {
-        background-color: rgba(241, 196, 15, 0.15);
-        color: #f1c40f;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(241, 196, 15, 0.3);
-    }
-    .badge-entregado {
-        background-color: rgba(46, 204, 113, 0.15);
-        color: #2ecc71;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid rgba(46, 204, 113, 0.3);
-    }
-    
-    /* Ajuste para los botones de entrega */
-    div.stButton > button {
-        width: 100%;
-        background-color: #238636 !important;
-        color: white !important;
-        border: 1px solid #30853e !important;
+    .stApp { background-color: #0f172a; }
+    .stTextInput > div > div > input, .stSelectbox > div > div > div {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
         border-radius: 8px !important;
-        padding: 6px 0px !important;
-        font-weight: bold !important;
+        color: #f8fafc !important;
     }
-    div.stButton > button:hover {
-        background-color: #2ea043 !important;
-        border-color: #3fb950 !important;
+    
+    div.stButton > button {
+        border-radius: 8px !important;
+        font-weight: 800 !important;
+        border: none !important;
+        transition: transform 0.1s ease !important;
+    }
+    div.stButton > button:active { transform: scale(0.96) !important; }
+    div.stButton > button[kind="primary"] { background-color: #10b981 !important; color: white !important; }
+    div.stButton > button[kind="secondary"] { background-color: #ef4444 !important; color: white !important; }
+    
+    /* Tarjetas de Pedidos */
+    .pedido-card {
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
     }
     </style>
-    
-    <iframe src="about:blank" style="display:none;" id="anti-idle-iframe"></iframe>
-    <script>
-        setInterval(function() {
-            var iframe = document.getElementById('anti-idle-iframe');
-            if (iframe) {
-                iframe.src = 'about:blank?keepalive=' + Date.now();
-                console.log("Blumare Keep-Alive: Conexión refrescada.");
-            }
-        }, 300000); 
-    </script>
     """, unsafe_allow_html=True)
-# URL exacta de tu API de Google Apps Script
+
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
+CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/ddouzzzs1i/image/upload"
+CLOUDINARY_PRESET = "bluemare_preset"
 
-# =============================================================================
-# LOGO DE LA APP (CENTRADO ABSOLUTO Y TAMAÑO AJUSTADO)
-# =============================================================================
+# Estado de autenticación
+if 'placa_autenticada' not in st.session_state: st.session_state.placa_autenticada = None
+
+# ==============================================================================
+# 2. CARGA DE CONEXIONES LOGÍSTICAS
+# ==============================================================================
+@st.cache_data(ttl=60)
+def obtener_vehiculos_maestros():
+    try:
+        res = requests.get(f"{URL_API}?tipo_operacion=ObtenerVehiculos", timeout=10)
+        return res.json() if isinstance(res.json(), list) else []
+    except: return []
+
+@st.cache_data(ttl=15)
+def obtener_pedidos_totales():
+    try:
+        res = requests.get(f"{URL_API}?tipo_operacion=ObtenerDespachos", timeout=12)
+        return res.json() if isinstance(res.json(), list) else []
+    except: return []
+
+# ==============================================================================
+# BRANDING DE ENCABEZADO
+# ==============================================================================
 nombre_logo = "logoBlumare.jpeg"
-
 if os.path.exists(nombre_logo):
-    import base64
-    with open(nombre_logo, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode()
-    
-    st.markdown(
-        f"""
-        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
-            <img src="data:image/jpeg;base64,{encoded_string}" width="130" style="border-radius: 10px;">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    with open(nombre_logo, "rb") as img_file:
+        encoded_string = base64.b64encode(img_file.read()).decode()
+    logo_html = f'<img src="data:image/jpeg;base64,{encoded_string}" width="45" style="border-radius: 6px;">'
 else:
-    st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado exactamente en: {os.path.abspath('.')}")
+    logo_html = "🚚"
 
-# =============================================================================
-# 2. ENCABEZADO DE LA APP
-# =============================================================================
-st.markdown("<h1 style='text-align: center; color: #898989; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #898989; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
-st.markdown("---")
+st.markdown(
+    f"""
+    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 15px; margin-bottom: 5px;">
+        {logo_html}
+        <h2 style='color: #f8fafc; margin: 0; font-weight: 800; font-size: 24px;'>BLUMARE - REPARTOS</h2>
+    </div>
+    <hr style="border-color: #334155; margin-top: 5px; margin-bottom: 20px;">
+    """, unsafe_allow_html=True
+)
 
-# =============================================================================
-# 3. CONEXIÓN Y DESCARGA DE DATOS (LECTURA REAL)
-# =============================================================================
-@st.cache_data(ttl=2)
-def descargar_datos_despacho():
-    try:
-        url_con_parametros = f"{URL_API}?tipo_operacion=ObtenerDespachos"
-        respuesta = requests.get(url_con_parametros, timeout=10)
-        resultado = respuesta.json()
-        
-        if isinstance(resultado, list):
-            return resultado
-        return []
-    except Exception as e:
-        st.error(f"Error de conexión con la central: {e}")
-        return []
-
-# FUNCIÓN PARA REPORTAR LA ENTREGA A GOOGLE SHEETS (ESCRITURA CON HORA)
-def registrar_entrega_en_sheets(id_venta):
-    try:
-        ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        url_actualizar = f"{URL_API}?tipo_operacion=ActualizarEstado&id_venta={id_venta}&nuevo_estado=Entregado&hora_entrega={ahora}"
-        respuesta = requests.get(url_actualizar, timeout=10)
-        
-        if respuesta.status_code == 200:
-            st.toast(f"¡Pedido #{id_venta} marcado como Entregado!", icon="✅")
-            st.cache_data.clear() # Limpia el caché inmediatamente para forzar la recarga
-            st.rerun()
-        else:
-            st.error("La central recibió la orden pero no pudo actualizar la fila.")
-    except Exception as e:
-        st.error(f"Error al comunicar la entrega: {e}")
-
-datos_crudos = descargar_datos_despacho()
-
-if not datos_crudos:
-    st.warning("No se recibieron datos de la central o la lista de despachos está vacía.")
-else:
-    # Procesamiento y Mapeo directo desde la matriz real de Google Sheets
-    df_base = pd.DataFrame(datos_crudos)
+# ==============================================================================
+# 3. INTERFAZ DE LOGEO MANDATORIO POR PLACA
+# ==============================================================================
+if st.session_state.placa_autenticada is None:
+    st.markdown("<h4 style='color: #94a3b8; text-align: center;'>Control de Acceso de Conductores</h4>", unsafe_allow_html=True)
     
-    df = pd.DataFrame()
-    df['id_venta'] = df_base[0].astype(str).str.strip()
-    df['fecha'] = df_base[1].astype(str)
-    df['direccion'] = df_base[2].astype(str)
-    df['cliente'] = df_base[3].astype(str)
-    df['producto'] = df_base[4].astype(str)
-    df['cantidad_kgs'] = pd.to_numeric(df_base[6], errors='coerce').fillna(0.0)
-    df['estado'] = df_base[10].astype(str).str.strip()
-    df['repartidor'] = df_base[2].astype(str) # Se usa la sede de despacho como Zona de manera predeterminada
-
-    # Filtro de seguridad para remover registros o encabezados vacíos
-    df = df[df['id_venta'] != ''].copy()
-
-    if df.empty:
-        st.info("No hay registros activos de despacho en este momento.")
+    placas_validas = obtener_vehiculos_maestros()
+    
+    if not placas_validas:
+        st.error("No se pudo conectar con la base de datos de vehículos. Intente de nuevo.")
     else:
-        # =============================================================================
-        # 4. METRICAS CLAVE EN TIEMPO REAL
-        # =============================================================================
-        pendientes = len(df[df['estado'].str.lower() != 'entregado'])
-        total_kgs = df['cantidad_kgs'].sum()
-
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric(label="Envíos Pendientes", value=pendientes)
-        with col2:
-            st.metric(label="Total Kilos Ruta", value=f"{total_kgs:,.1f} KG")
-
-        st.markdown("##")
-
-        # =============================================================================
-        # 5. BUSCADOR INTERACTIVO
-        # =============================================================================
-        busqueda = st.text_input("🔍 Buscar por Cliente o Producto:", placeholder="Escribe para filtrar la ruta...")
-
-        if busqueda:
-            df = df[
-                df['cliente'].str.contains(busqueda, case=False) | 
-                df['producto'].str.contains(busqueda, case=False)
-            ]
-
-        # =============================================================================
-        # 6. HOJA DE RUTA EN TIEMPO REAL (FILTRADA: SOLO MUESTRA PENDIENTES)
-        # =============================================================================
-        st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
+        placa_seleccionada = st.selectbox("Seleccione la Placa del Camión:", ["Seleccione su vehículo"] + placas_validas)
         
-        # Filtramos el DataFrame para que SOLO muestre las ventas que NO estén entregadas
-        df_pendientes = df[df['estado'].str.lower() != 'entregado']
+        if st.button("🔓 INICIAR SESIÓN", type="primary", use_container_width=True):
+            if placa_seleccionada != "Seleccione su vehículo":
+                st.session_state.placa_autenticada = placa_seleccionada
+                st.success(f"Vehículo {placa_seleccionada} autenticado correctamente.")
+                st.rerun()
+            else:
+                st.warning("Debe seleccionar una placa válida para ingresar.")
+else:
+    # Header de sesión activa
+    c_user, c_out = st.columns([7, 3])
+    c_user.markdown(f"🟢 Vehículo activo: **{st.session_state.placa_autenticada}**")
+    if c_out.button("🚪 Cerrar Sesión", type="secondary", use_container_width=True):
+        st.session_state.placa_autenticada = None
+        st.rerun()
+        
+    st.markdown("### Pedidos Asignados para Entrega")
+    
+    # Descarga e interpretación del JSON puro de la nube
+    raw_pedidos = obtener_pedidos_totales()
+    
+    # Filtrado estricto por placa (índice 12) y estado pendiente (índice 10)
+    pedidos_filtrados = []
+    for p in raw_pedidos:
+        if len(p) > 12:
+            placa_pedido = str(p[12]).strip().toUpperCase() if hasattr(str(p[12]), 'toUpperCase') else str(p[12]).strip().upper()
+            placa_login = st.session_state.placa_autenticada.strip().upper()
+            estado_pedido = str(p[10]).strip()
+            
+            if placa_pedido == placa_login and estado_pedido == "Pendiente":
+                pedidos_filtrados.append({
+                    "id": p[0], "fecha": p[1], "sede": p[2], "cliente": p[3],
+                    "producto": p[4], "lote": p[5], "cantidad": p[6]
+                })
 
-        if df_pendientes.empty:
-            st.success("¡Felicidades! 🎉 Todas las entregas del día han sido completadas.")
-        else:
-            for index, fila in df_pendientes.iterrows():
-                id_v = fila['id_venta']
-                estado = fila['estado']
-                clase_badge = "badge-pendiente"
-                
-                # Renderizado visual de la tarjeta
-                card_html = f"""
-                <div class="delivery-card">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
-                            <span style="font-family: monospace; color: #8b949e; font-size: 11px;">ID VENTA #{id_v}</span>
-                            <h4 style="color: white; margin: 4px 0 0 0; font-size: 18px; font-weight: bold;">{fila['cliente']}</h4>
-                        </div>
-                        <span class="{clase_badge}">{estado.upper()}</span>
-                    </div>
-                    <div style="margin-top: 15px; border-top: 1px solid #30363d; pt-10px; font-size: 14px;">
-                        <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                        <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 11px; color: #58a6ff; margin-bottom: 5px;">
-                        <span>🏢 Zona/Repartidor: {fila['repartidor']}</span>
-                        <span>📅 Registro: {fila['fecha']}</span>
-                    </div>
+    if not pedidos_filtrados:
+        st.info("No tienes rutas de entrega pendientes asignadas para el día de hoy.")
+    else:
+        for item in pedidos_filtrados:
+            with st.container():
+                st.markdown(f"""
+                <div class="pedido-card">
+                    <span style="color:#3b82f6; font-weight:bold;">📦 RECIBO: {item['id']}</span><br>
+                    <span style="color:#f8fafc; font-size:16px;"><b>Cliente:</b> {item['cliente']}</span><br>
+                    <span style="color:#94a3b8; font-size:14px;"><b>Carga:</b> {item['producto']} ({item['cantidad']} KGS)</span><br>
+                    <span style="color:#94a3b8; font-size:14px;"><b>Origen:</b> Sede {item['sede']} | Lote: {item['lote']}</span>
                 </div>
-                """
-                st.markdown(card_html, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)
                 
-                # Habilitamos el botón físico debajo de la tarjeta para confirmar
-                if st.button(f"Confirmar Entrega ✅", key=f"btn_{id_v}_{index}"):
-                    registrar_entrega_en_sheets(id_v)
-                
-                st.markdown("<div style='margin-bottom: 25px;'></div>", unsafe_allow_html=True)
-
-# =============================================================================
-# 7. BOTÓN MANUAL DE REFRESCAR
-# =============================================================================
-if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh"):
-    st.cache_data.clear()
-    st.rerun()
+                # Desplegable individual para procesar la entrega del pedido sin afectar los demás
+                with st.expander(f"⚙️ Reportar Entrega de {item['id']}"):
+                    foto_captura = st.camera_input(f"Tomar Foto al Documento Firmado:", key=f"cam_{item['id']}")
+                    
+                    if st.button(f"🚀 Confirmar Entrega de {item['id']}", key=f"btn_{item['id']}", type="primary", use_container_width=True):
+                        if not foto_captura:
+                            st.error("Es obligatorio tomar la foto del recibo firmado antes de finalizar.")
+                        else:
+                            with st.spinner("Subiendo evidencia digital a la nube y actualizando Google Sheets..."):
+                                try:
+                                    # 1. Envío binario multipart directo a la API REST de Cloudinary
+                                    archivos = {"file": foto_captura.getvalue()}
+                                    parametros = {"upload_preset": CLOUDINARY_PRESET}
+                                    
+                                    response_cloud = requests.post(CLOUDINARY_URL, files=archivos, data=parametros, timeout=15)
+                                    
+                                    if response_cloud.status_code == 200:
+                                        url_segura_evidencia = response_cloud.json().get("secure_url", "")
+                                        
+                                        # 2. Despacho de variables de estado a Apps Script
+                                        hora_actual_texto = datetime.now().strftime("%H:%M:%S")
+                                        endpoint_update = (
+                                            f"{URL_API}?tipo_operacion=ActualizarEstado"
+                                            f"&id_venta={item['id']}"
+                                            f"&nuevo_estado=Entregado"
+                                            f"&hora_entrega={hora_actual_texto}"
+                                            f"&soporte_entrega={url_segura_evidencia}"
+                                        )
+                                        
+                                        res_sheets = requests.get(endpoint_update, timeout=10)
+                                        if res_sheets.status_code == 200 and "SUCCESS" in res_sheets.text:
+                                            st.success("¡Documentación enviada con éxito! Registro completado.")
+                                            st.cache_data.clear()
+                                            st.rerun()
+                                        else:
+                                            st.error("Error al asentar el estado en la base de datos.")
+                                    else:
+                                        st.error("Error crítico de almacenamiento de imágenes (Cloudinary).")
+                                except Exception as ex:
+                                    st.error(f"Fallo de conectividad: {str(ex)}")
