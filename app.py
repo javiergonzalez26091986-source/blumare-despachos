@@ -105,6 +105,18 @@ st.markdown("""
     </script>
     """, unsafe_allow_html=True)
 
+/* ¡Capa de cobertura de seguridad! */
+div[class*="viewerBadge"]::before {
+    content: "" !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    width: 200px !important;
+    height: 100px !important;
+    background-color: #0f172a !important; /* Mismo color del fondo de tu app */
+    z-index: 999999 !important;
+}
+
 # URL exacta API de Google Apps Script
 URL_API = "https://script.google.com/macros/s/AKfycbys2ymG2Ad5av2jtR3LFttFiJPkQS2LfiOGwuw7-RynhbuPvEE9R5G90xeS_bofoi-CCg/exec"
 
