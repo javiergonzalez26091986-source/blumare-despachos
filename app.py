@@ -68,7 +68,7 @@ st.markdown("""
         border-color: #3fb950 !important;
     }
     
-    /* Botones secundarios (como Logout o Cancelar) */
+    /* Botones secundarios */
     div.stButton > button[kind="secondary"] {
         background-color: #21262d !important;
         border-color: #30363d !important;
@@ -111,7 +111,7 @@ if os.path.exists(nombre_logo):
         """, unsafe_allow_html=True
     )
 else:
-    st.error(f"⚠️ Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado en el repositorio.")
+    st.error(f"Archivo del logo no detectado. Asegúrate de que '{nombre_logo}' esté guardado en el repositorio.")
 
 st.markdown("<h1 style='text-align: center; color: #898989; margin-bottom: 0;'>BLUMARE</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #898989; font-weight: bold; letter-spacing: 2px; margin-top: 0;'>LOGÍSTICA Y DESPACHOS</p>", unsafe_allow_html=True)
@@ -138,7 +138,6 @@ def descargar_datos_despacho():
         return []
 
 def registrar_entrega_en_sheets(id_venta, foto_bytes):
-    # 1. Intentar la subida a los servidores de almacenamiento de imágenes
     archivos = {"file": foto_bytes}
     parametros = {"upload_preset": CLOUDINARY_PRESET}
     
@@ -148,7 +147,6 @@ def registrar_entrega_en_sheets(id_venta, foto_bytes):
         if res_cloud.status_code == 200:
             link_foto = res_cloud.json().get("secure_url", "")
             
-            # 2. Registrar el éxito y la URL en Google Sheets
             ahora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             url_actualizar = (
                 f"{URL_API}?tipo_operacion=ActualizarEstado"
@@ -159,22 +157,20 @@ def registrar_entrega_en_sheets(id_venta, foto_bytes):
             )
             respuesta = requests.get(url_actualizar, timeout=10)
             if respuesta.status_code == 200:
-                st.toast(f"¡Pedido #{id_venta} marcado como Entregado!", icon="✅")
+                st.toast(f"Pedido #{id_venta} marcado como Entregado", icon="✅")
                 st.cache_data.clear() 
                 st.rerun()
             else:
                 st.error("La central recibió la imagen, pero no pudo actualizar el archivo maestro.")
         else:
-            # DIAGNÓSTICO EN TIEMPO REAL: Extrae la razón exacta devuelta por el servidor
             try:
                 mensaje_servidor = res_cloud.json().get("error", {}).get("message", res_cloud.text)
             except:
                 mensaje_servidor = res_cloud.text
-            st.error(f"❌ Error de Cloudinary: {mensaje_servidor}")
-            st.info("💡 Consejo: Comprueba que el Upload Preset sea 'Unsigned' en tu panel de Cloudinary.")
+            st.error(f"Error de Cloudinary: {mensaje_servidor}")
             
     except Exception as ex:
-        st.error(f"⚠️ Fallo de conexión de red al intentar subir el soporte: {str(ex)}")
+        st.error(f"Fallo de conexión de red al intentar subir el soporte: {str(ex)}")
 
 # =============================================================================
 # LÓGICA DE INTERFAZ: PANTALLA DE INICIO DE SESIÓN VS. PANEL DE REPARTOS
@@ -188,7 +184,8 @@ if st.session_state.placa_autenticada is None:
         st.warning("Cargando base de datos de vehículos...")
     else:
         placa_seleccionada = st.selectbox("Seleccione su Placa Asignada:", ["Seleccione su vehículo"] + placas_validas)
-        if st.button("🔒 INGRESAR A LA RUTA"):
+        # Uso del icon nativo de Material Design para Streamlit
+        if st.button("Ingresar a la Ruta", icon=":material/login:"):
             if placa_seleccionada != "Seleccione su vehículo":
                 st.session_state.placa_autenticada = placa_seleccionada
                 st.rerun()
@@ -198,9 +195,10 @@ else:
     # --- PANEL DE REPARTOS Y RUTAS ---
     col_info, col_logout = st.columns([7, 3])
     with col_info:
-        st.markdown(f"🟢 Conductor Activo: **{st.session_state.placa_autenticada}**")
+        st.markdown(f"<span style='color:#3fb950;'>●</span> Conductor Activo: **{st.session_state.placa_autenticada}**", unsafe_allow_html=True)
     with col_logout:
-        if st.button("🚪 Salir", type="secondary"):
+        # Icono corporativo de salida
+        if st.button("Cerrar Sesión", type="secondary", icon=":material/logout:"):
             st.session_state.placa_autenticada = None
             st.rerun()
             
@@ -252,16 +250,16 @@ else:
             st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
             
             if df_pendientes.empty:
-                st.success("¡Felicidades! 🎉 Todas tus entregas asignadas han sido completadas.")
+                st.success("Todas tus entregas asignadas han sido completadas satisfactoriamente.")
             else:
                 for index, fila in df_pendientes.iterrows():
                     id_v = fila['id_venta']
                     
-                    # Llave dinámica para controlar la visibilidad del paso de captura de foto
                     estado_camara = f"mostrar_camara_{id_v}_{index}"
                     if estado_camara not in st.session_state:
                         st.session_state[estado_camara] = False
                     
+                    # HTML limpio, sin emojis
                     card_html = f"""
                     <div class="delivery-card">
                         <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -272,39 +270,39 @@ else:
                             <span class="badge-pendiente">PENDIENTE</span>
                         </div>
                         <div style="margin-top: 15px; border-top: 1px solid #30363d; padding-top: 10px; font-size: 14px;">
-                            <p style="margin: 10px 0 5px 0; color: #c9d1d9;">📦 <b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
-                            <p style="margin: 5px 0 5px 0; color: #8b949e;">📍 <b>Sede Despacho:</b> {fila['direccion']}</p>
+                            <p style="margin: 10px 0 5px 0; color: #c9d1d9;"><b>Producto:</b> {fila['producto']} — <span style="color: #00f0ff; font-weight: bold;">{fila['cantidad_kgs']} KGS</span></p>
+                            <p style="margin: 5px 0 5px 0; color: #8b949e;"><b>Sede Despacho:</b> {fila['direccion']}</p>
                         </div>
                     </div>
                     """
                     st.markdown(card_html, unsafe_allow_html=True)
                     
-                    # Flujo de despliegue dinámico por pasos
+                    # Flujo de botones con Material Icons
                     if not st.session_state[estado_camara]:
-                        if st.button(f"✅ Confirmar Entrega", key=f"abrir_cam_{id_v}_{index}"):
+                        if st.button("Confirmar Entrega", key=f"abrir_cam_{id_v}_{index}", icon=":material/task_alt:"):
                             st.session_state[estado_camara] = True
                             st.rerun()
                     else:
-                        st.info("Capture el documento firmado antes de confirmar.")
-                        foto_evidencia = st.camera_input(f"📷 Soporte {id_v}", key=f"cam_{id_v}_{index}", label_visibility="collapsed")
+                        st.caption("Protocolo de seguridad: Evidencia fotográfica obligatoria.")
+                        foto_evidencia = st.camera_input(f"Soporte {id_v}", key=f"cam_{id_v}_{index}", label_visibility="collapsed")
                         
                         col_btn1, col_btn2 = st.columns(2)
                         with col_btn1:
-                            if st.button("❌ Cancelar", key=f"cancelar_{id_v}_{index}", type="secondary"):
+                            if st.button("Cancelar", key=f"cancelar_{id_v}_{index}", type="secondary", icon=":material/close:"):
                                 st.session_state[estado_camara] = False
                                 st.rerun()
                                 
                         with col_btn2:
-                            if st.button(f"🚀 Enviar Soporte", key=f"btn_{id_v}_{index}"):
+                            if st.button("Enviar Soporte", key=f"btn_{id_v}_{index}", icon=":material/upload:"):
                                 if foto_evidencia is None:
-                                    st.error("⚠️ La foto es OBLIGATORIA.")
+                                    st.error("La foto es obligatoria para cerrar la entrega.")
                                 else:
-                                    with st.spinner("Subiendo evidencia..."):
+                                    with st.spinner("Subiendo evidencia al sistema logístico..."):
                                         registrar_entrega_en_sheets(id_v, foto_evidencia.getvalue())
                                         st.session_state[estado_camara] = False
                     
                     st.markdown("<hr style='border-color: #30363d; margin: 25px 0px;'>", unsafe_allow_html=True)
 
-    if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh", type="secondary"):
+    if st.button("Sincronizar Datos Ahora", key="btn_global_refresh", type="secondary", icon=":material/sync:"):
         st.cache_data.clear()
         st.rerun()
