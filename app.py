@@ -68,7 +68,7 @@ st.markdown("""
         border-color: #3fb950 !important;
     }
     
-    /* Botones secundarios (como Logout) */
+    /* Botones secundarios (como Logout o Cancelar) */
     div.stButton > button[kind="secondary"] {
         background-color: #21262d !important;
         border-color: #30363d !important;
@@ -189,7 +189,6 @@ else:
     with col_info:
         st.markdown(f"🟢 Conductor Activo: **{st.session_state.placa_autenticada}**")
     with col_logout:
-        # Aquí estaba el error (kind="secondary"). Cambiado a type="secondary".
         if st.button("🚪 Salir", type="secondary"):
             st.session_state.placa_autenticada = None
             st.rerun()
@@ -201,7 +200,6 @@ else:
     else:
         df_base = pd.DataFrame(datos_crudos)
         
-        # Mapeo cuidadoso de los datos (Columna M = Índice 12 para la Placa)
         df = pd.DataFrame()
         df['id_venta'] = df_base[0].astype(str).str.strip()
         df['fecha'] = df_base[1].astype(str)
@@ -212,7 +210,6 @@ else:
         df['estado'] = df_base[10].astype(str).str.strip()
         df['repartidor'] = df_base[2].astype(str)
         
-        # Función para evitar errores si alguna fila antigua no tiene la columna de placa
         def extraer_placa(fila):
             try: return str(fila[12]).strip().upper()
             except: return ""
@@ -225,7 +222,7 @@ else:
         if df.empty:
             st.info("No hay registros activos de despacho en este momento.")
         else:
-            # 1. FILTRADO ESTRICTO: Solo pendientes Y de la placa logueada
+            # 1. FILTRADO ESTRICTO
             placa_actual = st.session_state.placa_autenticada.strip().upper()
             df_pendientes = df[(df['estado'].str.lower() != 'entregado') & (df['placa'] == placa_actual)]
 
@@ -240,7 +237,7 @@ else:
                 st.metric(label="Kilos en Camión", value=f"{total_kgs:,.1f} KG")
             st.markdown("##")
 
-            # 3. RENDERIZADO DE LA RUTA Y CÁMARA
+            # 3. RENDERIZADO DE LA RUTA
             st.markdown("<h3 style='color: gray; font-size: 14px; letter-spacing: 1px;'>HOJA DE RUTA EN TIEMPO REAL</h3>", unsafe_allow_html=True)
             
             if df_pendientes.empty:
@@ -248,6 +245,11 @@ else:
             else:
                 for index, fila in df_pendientes.iterrows():
                     id_v = fila['id_venta']
+                    
+                    # Llave dinámica para controlar si la cámara de este pedido está abierta o cerrada
+                    estado_camara = f"mostrar_camara_{id_v}_{index}"
+                    if estado_camara not in st.session_state:
+                        st.session_state[estado_camara] = False
                     
                     card_html = f"""
                     <div class="delivery-card">
@@ -266,20 +268,35 @@ else:
                     """
                     st.markdown(card_html, unsafe_allow_html=True)
                     
-                    # Widget de cámara y botón de validación justo debajo de la tarjeta
-                    st.info("Capture el documento firmado antes de confirmar.")
-                    foto_evidencia = st.camera_input(f"📷 Soporte {id_v}", key=f"cam_{id_v}", label_visibility="collapsed")
-                    
-                    if st.button(f"Subir Soporte y Confirmar Entrega ✅", key=f"btn_{id_v}_{index}"):
-                        if foto_evidencia is None:
-                            st.error("⚠️ La foto del soporte de entrega es OBLIGATORIA.")
-                        else:
-                            with st.spinner("Subiendo imagen al servidor y sincronizando ruta..."):
-                                registrar_entrega_en_sheets(id_v, foto_evidencia.getvalue())
+                    # Lógica de mostrar/ocultar cámara
+                    if not st.session_state[estado_camara]:
+                        # Botón inicial para abrir la cámara
+                        if st.button(f"✅ Confirmar Entrega", key=f"abrir_cam_{id_v}_{index}"):
+                            st.session_state[estado_camara] = True
+                            st.rerun()
+                    else:
+                        # Se muestra la cámara y los controles finales
+                        st.info("Capture el documento firmado antes de confirmar.")
+                        foto_evidencia = st.camera_input(f"📷 Soporte {id_v}", key=f"cam_{id_v}_{index}", label_visibility="collapsed")
+                        
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn1:
+                            if st.button("❌ Cancelar", key=f"cancelar_{id_v}_{index}", type="secondary"):
+                                st.session_state[estado_camara] = False
+                                st.rerun()
+                                
+                        with col_btn2:
+                            if st.button(f"🚀 Enviar Soporte", key=f"btn_{id_v}_{index}"):
+                                if foto_evidencia is None:
+                                    st.error("⚠️ La foto es OBLIGATORIA.")
+                                else:
+                                    with st.spinner("Subiendo evidencia..."):
+                                        registrar_entrega_en_sheets(id_v, foto_evidencia.getvalue())
+                                        # Si es exitoso, cerramos el menú de cámara para limpieza
+                                        st.session_state[estado_camara] = False
                     
                     st.markdown("<hr style='border-color: #30363d; margin: 25px 0px;'>", unsafe_allow_html=True)
 
-    # También corregimos este botón
     if st.button("🔄 Sincronizar Datos Ahora", key="btn_global_refresh", type="secondary"):
         st.cache_data.clear()
         st.rerun()
