@@ -51,9 +51,6 @@ st.markdown("""
     div[data-testid="stToolbar"] { visibility: hidden !important; display: none !important; }
     footer {visibility: hidden;}
     
-    /* Fondo general oscuro */
-    .stApp {
-        background-color: #0d1117;
     }
     /* Tarjetas de entregas (Glassmorphism) */
     .delivery-card {
