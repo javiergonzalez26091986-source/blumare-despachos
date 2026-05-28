@@ -8,7 +8,7 @@ def despertar_portal():
         browser = p.chromium.launch(headless=True)
         page = browser.new_workbook() if hasattr(browser, 'new_workbook') else browser.new_page()
         
-        # URL de tu Portal de Pagos de Señal Más
+        # URL
         url = "https://blumare-despachos-q45bu7xnguhecu4w8kdenk.streamlit.app/" 
         
         print(f"Visitando el portal: {url}")
