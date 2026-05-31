@@ -97,7 +97,7 @@ if 'placa_autenticada' not in st.session_state:
     st.session_state.placa_autenticada = None
 
 # =============================================================================
-# LOGO DE LA APP (CENTRADO)
+# LOGO DE LA APP
 # =============================================================================
 nombre_logo = "logoBlumare.jpeg"
 if os.path.exists(nombre_logo):
@@ -259,7 +259,7 @@ else:
                     if estado_camara not in st.session_state:
                         st.session_state[estado_camara] = False
                     
-                    # HTML limpio, sin emojis
+                    # HTML
                     card_html = f"""
                     <div class="delivery-card">
                         <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -277,7 +277,7 @@ else:
                     """
                     st.markdown(card_html, unsafe_allow_html=True)
                     
-                    # Flujo de botones con Material Icons
+                    # Flujo de botones
                     if not st.session_state[estado_camara]:
                         if st.button("Confirmar Entrega", key=f"abrir_cam_{id_v}_{index}", icon=":material/task_alt:"):
                             st.session_state[estado_camara] = True
